@@ -85,6 +85,22 @@ class MockMixerServerImpl final : public ::istio::mixer::v1::Mixer::Service {
   }
 };
 
+void WaitForServer(const std::string& server) {
+  auto channel = CreateChannel(server, ::grpc::InsecureChannelCredentials());
+  auto stub = ::istio::mixer::v1::Mixer::NewStub(channel);
+  ::grpc::ClientContext context;
+  auto stream = stub->Check(&context);
+
+  CheckRequest request;
+  stream->Write(request);
+  stream->WritesDone();
+
+  // This call will wait if server is not ready
+  CheckResponse response;
+  stream->Read(&response);
+  stream->Finish();
+}
+
 template <class T>
 class MockReader : public ReadInterface<T> {
  public:
@@ -101,6 +117,8 @@ class GrpcTransportTest : public ::testing::Test {
     builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
     builder.RegisterService(&service_);
     server_ = builder.BuildAndStart();
+
+    WaitForServer(server_address);
 
     grpc_transport_.reset(new GrpcTransport(server_address));
   }
