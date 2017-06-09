@@ -38,7 +38,6 @@ genrule(
 cc_library(
     name = "mixer_client_lib",
     srcs = [
-        "global_dictionary.h",
         "src/attribute.cc",
         "src/attribute_converter.cc",
         "src/attribute_converter.h",
