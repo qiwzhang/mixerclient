@@ -35,13 +35,16 @@ TOP = r"""/* Copyright 2017 Istio Authors. All Rights Reserved.
 #ifndef MIXERCLIENT_GLOBAL_DICTIONARY_H
 #define MIXERCLIENT_GLOBAL_DICTIONARY_H
 
+#include <string>
+#include <vector>
+
 namespace istio {
 namespace mixer_client {
 
-#define KGlobalDictionary { \
+static const std::vector<std::string> kGlobalWords = {
 """
 
-BOTTOM = r"""}
+BOTTOM = r"""};
 
 }  // namespace mixer_client
 }  // namespace istio
@@ -51,7 +54,7 @@ BOTTOM = r"""}
 
 words = ''
 for w in yaml.load(open(sys.argv[1])):
-    words += "    \"%s\",  \\\n" % w
+    words += "    \"%s\",\n" % w
 
 print TOP + words + BOTTOM
 
