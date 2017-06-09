@@ -52,10 +52,10 @@ BOTTOM = r"""};
 #endif  // MIXERCLIENT_GLOBAL_DICTIONARY_H
 """
 
-words = ''
-for w in yaml.load(open(sys.argv[1])):
-    words += "    \"%s\",\n" % w
+all_words = ''
+for word in yaml.load(open(sys.argv[1])):
+    all_words += "    \"%s\",\n" % word
 
-print TOP + words + BOTTOM
+print TOP + all_words + BOTTOM
 
 
