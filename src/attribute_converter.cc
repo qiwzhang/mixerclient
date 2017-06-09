@@ -158,7 +158,7 @@ class BatchConverterImpl : public BatchConverter {
 }  // namespace
 
 AttributeConverter::AttributeConverter() {
-  const std::vector<std::string>& global_words = kGlobalWords;
+  const std::vector<std::string>& global_words = GetGlobalWords();
   for (unsigned int i = 0; i < global_words.size(); i++) {
     global_dict_[global_words[i]] = i;
   }

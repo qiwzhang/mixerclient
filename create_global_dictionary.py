@@ -32,24 +32,27 @@ TOP = r"""/* Copyright 2017 Istio Authors. All Rights Reserved.
  * limitations under the License.
  */
 
-#ifndef MIXERCLIENT_GLOBAL_DICTIONARY_H
-#define MIXERCLIENT_GLOBAL_DICTIONARY_H
-
-#include <string>
-#include <vector>
+#include "src/global_dictionary.h"
 
 namespace istio {
 namespace mixer_client {
+namespace {
 
-static const std::vector<std::string> kGlobalWords = {
+// Automatically generated global dictionary from
+// https://github.com/istio/api/blob/master/mixer/v1/global_dictionary.yaml
+const std::vector<std::string> kGlobalWords {
 """
 
 BOTTOM = r"""};
 
+}  // namespace
+
+const std::vector<std::string>& GetGlobalWords() {
+   return kGlobalWords;
+}
+
 }  // namespace mixer_client
 }  // namespace istio
-
-#endif  // MIXERCLIENT_GLOBAL_DICTIONARY_H
 """
 
 all_words = ''

@@ -27,7 +27,7 @@ genrule(
         "@mixerapi_git//:mixer/v1/global_dictionary.yaml",
     ],
     outs = [
-        "global_dictionary.h",
+        "src/global_dictionary.cc",
     ],
     cmd = "$(location //:create_global_dictionary) $(location @mixerapi_git//:mixer/v1/global_dictionary.yaml) > $@",
     tools = [
@@ -38,7 +38,6 @@ genrule(
 cc_library(
     name = "mixer_client_lib",
     srcs = [
-        "global_dictionary.h",
         "src/attribute.cc",
         "src/attribute_converter.cc",
         "src/attribute_converter.h",
@@ -50,6 +49,8 @@ cc_library(
         "src/client_impl.h",
         "src/delta_update.cc",
         "src/delta_update.h",
+        "src/global_dictionary.cc",
+        "src/global_dictionary.h",
         "src/report_batch.cc",
         "src/report_batch.h",
         "src/signature.cc",
