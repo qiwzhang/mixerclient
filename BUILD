@@ -16,6 +16,11 @@ licenses(["notice"])
 
 load("@protobuf_git//:protobuf.bzl", "cc_proto_library")
 
+py_binary(
+    name = "create_global_dictionary",
+    srcs = ["create_global_dictionary.py"],
+)
+
 genrule(
     name = "global_dictionary_header_gen",
     srcs = [
@@ -24,22 +29,16 @@ genrule(
     outs = [
         "global_dictionary.h",
     ],
-    cmd = "$(location //:create_global_dictionary.py) $(location @mixerapi_git//:mixer/v1/global_dictionary.yaml) > $@",
+    cmd = "$(location //:create_global_dictionary) $(location @mixerapi_git//:mixer/v1/global_dictionary.yaml) > $@",
     tools = [
-        "//:create_global_dictionary.py",
-    ],
-)
-
-cc_library(
-    name = "global_dictionary_header",
-    srcs = [
-        "global_dictionary.h",
+        "//:create_global_dictionary",
     ],
 )
 
 cc_library(
     name = "mixer_client_lib",
     srcs = [
+        "global_dictionary.h",
         "src/attribute.cc",
         "src/attribute_converter.cc",
         "src/attribute_converter.h",
@@ -71,7 +70,6 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        ":global_dictionary_header",
         ":simple_lru_cache",
 	"//prefetch:quota_prefetch_lib",
         "//external:boringssl_crypto",
