@@ -12,6 +12,7 @@ addons:
       - gcc-4.8
       - g++-4.8
       - wget
+      - python-yaml
       # Package list from http://bazel.io/docs/install.html
       - oracle-java8-installer
       - pkg-config
