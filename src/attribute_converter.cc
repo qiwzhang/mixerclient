@@ -180,7 +180,7 @@ bool GlobalDictionary::GetIndex(const std::string name, int* index) const {
 void GlobalDictionary::ShrinkToBase() {
   if (top_index_ > kGlobalDictionaryBaseSize) {
     top_index_ = kGlobalDictionaryBaseSize;
-    GOOGLE_LOG(INFO) << "Shrink global dictionary " << global_dict_.size()
+    GOOGLE_LOG(INFO) << "Shrink global dictionary " << top_index_
                      << " to base.";
   }
 }
