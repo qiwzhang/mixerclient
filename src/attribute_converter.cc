@@ -18,6 +18,9 @@
 #include "global_dictionary.h"
 #include "utils/protobuf.h"
 
+using ::istio::mixer::v1::Attributes;
+using ::istio::mixer::v1::CompressedAttributes;
+
 namespace istio {
 namespace mixer_client {
 namespace {
@@ -75,22 +78,23 @@ class MessageDictionary {
 
 bool ConvertToPb(const Attributes& attributes, MessageDictionary& dict,
                  DeltaUpdate& delta_update,
-                 ::istio::mixer::v1::CompressedAttributes* pb) {
+                 CompressedAttributes* pb) {
   delta_update.Start();
 
   // Fill attributes.
-  for (const auto& it : attributes.attributes) {
+  for (const auto& it : attributes.attributes()) {
     const std::string& name = it.first;
+    const Attributes::AttributeValue& value = it.second;
 
     int index = dict.GetIndex(name);
 
     // Check delta update. If same, skip it.
-    if (delta_update.Check(index, it.second)) {
+    if (delta_update.Check(index, value)) {
       continue;
     }
 
     // Fill the attribute to proper map.
-    switch (it.second.type) {
+    switch (value.value_type) {
       case Attributes::Value::ValueType::STRING:
         (*pb->mutable_strings())[index] = dict.GetIndex(it.second.str_v);
         break;

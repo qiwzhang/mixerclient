@@ -36,7 +36,7 @@ class DeltaUpdate {
   // Check an attribute, return true if it is in the previous
   // set with same value, so no need to send it again.
   // Each attribute in the current set needs to call this method.
-  virtual bool Check(int index, const Attributes::Value& value) = 0;
+  virtual bool Check(int index, const ::istio::mixer::v1::Attributes::AttributeValue& value) = 0;
 
   // Finish a delta update.
   // Return false if delta update is not supported.
