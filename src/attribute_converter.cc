@@ -19,6 +19,8 @@
 #include "utils/protobuf.h"
 
 using ::istio::mixer::v1::Attributes;
+using ::istio::mixer::v1::Attributes_AttributeValue;
+using ::istio::mixer::v1::Attributes_StringMap;
 using ::istio::mixer::v1::CompressedAttributes;
 
 namespace istio {
@@ -66,14 +68,14 @@ class MessageDictionary {
 };
 
 ::istio::mixer::v1::StringMap CreateStringMap(
-    const std::map<std::string, std::string>& string_map,
-    MessageDictionary& dict) {
-  ::istio::mixer::v1::StringMap map_msg;
-  auto* map_pb = map_msg.mutable_entries();
-  for (const auto& it : string_map) {
+					      const Attributes_StringMap& raw_map,
+					      MessageDictionary& dict) {
+  ::istio::mixer::v1::StringMap compressed_map;
+  auto* map_pb = compressed_map.mutable_entries();
+  for (const auto& it : raw_map.entries()) {
     (*map_pb)[dict.GetIndex(it.first)] = dict.GetIndex(it.second);
   }
-  return map_msg;
+  return compressed_map;
 }
 
 bool ConvertToPb(const Attributes& attributes, MessageDictionary& dict,
@@ -84,7 +86,7 @@ bool ConvertToPb(const Attributes& attributes, MessageDictionary& dict,
   // Fill attributes.
   for (const auto& it : attributes.attributes()) {
     const std::string& name = it.first;
-    const Attributes::AttributeValue& value = it.second;
+    const Attributes_AttributeValue& value = it.second;
 
     int index = dict.GetIndex(name);
 
@@ -94,33 +96,34 @@ bool ConvertToPb(const Attributes& attributes, MessageDictionary& dict,
     }
 
     // Fill the attribute to proper map.
-    switch (value.value_type) {
-      case Attributes::Value::ValueType::STRING:
-        (*pb->mutable_strings())[index] = dict.GetIndex(it.second.str_v);
-        break;
-      case Attributes::Value::ValueType::BYTES:
-        (*pb->mutable_bytes())[index] = it.second.str_v;
-        break;
-      case Attributes::Value::ValueType::INT64:
-        (*pb->mutable_int64s())[index] = it.second.value.int64_v;
-        break;
-      case Attributes::Value::ValueType::DOUBLE:
-        (*pb->mutable_doubles())[index] = it.second.value.double_v;
-        break;
-      case Attributes::Value::ValueType::BOOL:
-        (*pb->mutable_bools())[index] = it.second.value.bool_v;
-        break;
-      case Attributes::Value::ValueType::TIME:
-        (*pb->mutable_timestamps())[index] = CreateTimestamp(it.second.time_v);
-        break;
-      case Attributes::Value::ValueType::DURATION:
-        (*pb->mutable_durations())[index] =
-            CreateDuration(it.second.duration_nanos_v);
-        break;
-      case Attributes::Value::ValueType::STRING_MAP:
-        (*pb->mutable_string_maps())[index] =
-            CreateStringMap(it.second.string_map_v, dict);
-        break;
+    switch (value.value_case()) {
+    case Attributes_AttributeValue::kStringValue:
+      (*pb->mutable_strings())[index] = dict.GetIndex(value.string_value());
+      break;
+    case Attributes_AttributeValue::kBytesValue:
+      (*pb->mutable_bytes())[index] = value.bytes_value();
+      break;
+    case Attributes_AttributeValue::kInt64Value:
+      (*pb->mutable_int64s())[index] = value.int64_value();
+      break;
+    case Attributes_AttributeValue::kDoubleValue:
+      (*pb->mutable_doubles())[index] = value.double_value();
+      break;
+    case Attributes_AttributeValue::kBoolValue:
+      (*pb->mutable_bools())[index] = value.bool_value();
+      break;
+    case Attributes_AttributeValue::kTimestampValue:
+      (*pb->mutable_timestamps())[index] = value.timestamp_value();
+      break;
+    case Attributes_AttributeValue::kDurationValue:
+      (*pb->mutable_durations())[index] = value.duration_value();
+      break;
+    case Attributes_AttributeValue::kStringMapValue:
+      (*pb->mutable_string_maps())[index] =
+	CreateStringMap(value.string_map_value(), dict);
+      break;
+    case Attributes_AttributeValue::VALUE_NOT_SET:
+      break;
     }
   }
 
@@ -137,7 +140,7 @@ class BatchConverterImpl : public BatchConverter {
   }
 
   bool Add(const Attributes& attributes) override {
-    ::istio::mixer::v1::CompressedAttributes pb;
+    CompressedAttributes pb;
     if (!ConvertToPb(attributes, dict_, *delta_update_, &pb)) {
       return false;
     }

@@ -77,6 +77,26 @@ cc_library(
 )
 
 cc_library(
+    name = "attribute_converter_lib",
+    srcs = [
+        "src/attribute_converter.cc",
+        "src/attribute_converter.h",
+        "src/delta_update.cc",
+        "src/delta_update.h",
+        "src/global_dictionary.cc",
+        "src/global_dictionary.h",
+        "utils/md5.cc",
+        "utils/md5.h",
+        "utils/protobuf.cc",
+        "utils/protobuf.h",
+        "utils/status_test_util.h",
+    ],
+    deps = [
+        "//external:mixer_api_cc_proto",
+    ],
+)
+
+cc_library(
     name = "simple_lru_cache",
     srcs = ["utils/google_macros.h"],
     hdrs = [
@@ -118,7 +138,7 @@ cc_test(
     srcs = ["src/attribute_converter_test.cc"],
     linkstatic = 1,
     deps = [
-        ":mixer_client_lib",
+        ":attribute_converter_lib",
         "//external:googletest_main",
     ],
 )

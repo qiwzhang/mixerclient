@@ -21,6 +21,11 @@
 #include "gtest/gtest.h"
 
 using std::string;
+using ::istio::mixer::v1::Attributes;
+using ::istio::mixer::v1::Attributes_AttributeValue;
+using ::istio::mixer::v1::Attributes_StringMap;
+using ::istio::mixer::v1::CompressedAttributes;
+
 using ::google::protobuf::TextFormat;
 using ::google::protobuf::util::MessageDifferencer;
 
@@ -206,7 +211,8 @@ global_word_count: 111
 class AttributeConverterTest : public ::testing::Test {
  protected:
   void AddString(const string& key, const string& value) {
-    attributes_.attributes[key] = Attributes::StringValue(value);
+    AttributesStringValue(value);
+    (*attributes_.mutable_attributes())[key] = 
   }
 
   void AddBytes(const string& key, const string& value) {

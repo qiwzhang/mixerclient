@@ -18,8 +18,8 @@
 
 #include <unordered_map>
 
-#include "include/attribute.h"
-#include "mixer/v1/service.pb.h"
+#include "mixer/v1/attributes.pb.h"
+#include "mixer/v1/report.pb.h"
 
 namespace istio {
 namespace mixer_client {
@@ -61,9 +61,9 @@ class BatchConverter {
 };
 
 // Compress attributes.
-class AttributeCompressor {
+class AttributeConverter {
  public:
-  void Compress(const ::istio::mixer::v1::Attributes& attributes,
+  void Convert(const ::istio::mixer::v1::Attributes& attributes,
                ::istio::mixer::v1::CompressedAttributes* attributes_pb) const;
 
   // Create a batch converter.

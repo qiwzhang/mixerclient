@@ -18,7 +18,7 @@
 
 #include <set>
 
-using ::istio::mixer::v1::Attributes::AttributeValue;
+using ::istio::mixer::v1::Attributes_AttributeValue;
 using ::google::protobuf::util::MessageDifferencer;
 
 namespace istio {
@@ -35,7 +35,7 @@ class DeltaUpdateImpl : public DeltaUpdate {
     }
   }
 
-  bool Check(int index, const AttributeValue& value) override {
+  bool Check(int index, const Attributes_AttributeValue& value) override {
     bool same = false;
     const auto& it = prev_map_.find(index);
     if (it != prev_map_.end()) {
@@ -59,14 +59,14 @@ class DeltaUpdateImpl : public DeltaUpdate {
   std::set<int> prev_set_;
 
   // The attribute map from previous.
-  std::map<int, AttributeValue> prev_map_;
+  std::map<int, Attributes_AttributeValue> prev_map_;
 };
 
 // An optimization for non-delta update case.
 class DeltaUpdateNoOpImpl : public DeltaUpdate {
  public:
   void Start() override {}
-  bool Check(int index, const Attributes::Value& value) override {
+  bool Check(int index, const Attributes_AttributeValue& value) override {
     return false;
   }
   bool Finish() override { return true; }
