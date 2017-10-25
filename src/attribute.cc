@@ -14,163 +14,79 @@
  */
 
 #include "include/attribute.h"
-#include <iomanip>
-#include <locale>
-#include <sstream>
+#include "utils/protobuf.h"
+
+using ::istio::mixer::v1::Attributes;
+using ::istio::mixer::v1::Attributes_AttributeValue;
+using ::istio::mixer::v1::Attributes_StringMap;
 
 namespace istio {
 namespace mixer_client {
 
-namespace {
+const std::string AttributesHelper::kQuotaName = "quota.name";
+const std::string AttributesHelper::kQuotaAmount = "quota.amount";
 
-std::string escape(const std::string& source) {
-  std::stringstream ss;
-  static const std::locale& loc = std::locale::classic();
+void AttributesHelper::AddString(const std::string key, const std::string& str,
+                                 Attributes* attributes) {
+  Attributes_AttributeValue value_pb;
+  value_pb.set_string_value(str);
+  (*attributes->mutable_attributes())[key] = value_pb;
+}
 
-  for (const auto& c : source) {
-    if (std::isprint(c, loc)) {
-      ss << c;
-    } else {
-      ss << "\\x" << std::setfill('0') << std::setw(2) << std::hex
-         << static_cast<uint16_t>(c);
-    }
+void AttributesHelper::AddBytes(const std::string key, const std::string& bytes,
+                                Attributes* attributes) {
+  Attributes_AttributeValue value_pb;
+  value_pb.set_bytes_value(bytes);
+  (*attributes->mutable_attributes())[key] = value_pb;
+}
+
+void AttributesHelper::AddInt64(const std::string key, int64_t value,
+                                Attributes* attributes) {
+  Attributes_AttributeValue value_pb;
+  value_pb.set_int64_value(value);
+  (*attributes->mutable_attributes())[key] = value_pb;
+}
+
+void AttributesHelper::AddDouble(const std::string key, double value,
+                                 Attributes* attributes) {
+  Attributes_AttributeValue value_pb;
+  value_pb.set_double_value(value);
+  (*attributes->mutable_attributes())[key] = value_pb;
+}
+
+void AttributesHelper::AddBool(const std::string key, bool value,
+                               Attributes* attributes) {
+  Attributes_AttributeValue value_pb;
+  value_pb.set_bool_value(value);
+  (*attributes->mutable_attributes())[key] = value_pb;
+}
+
+void AttributesHelper::AddTime(
+    const std::string key,
+    std::chrono::time_point<std::chrono::system_clock> value,
+    Attributes* attributes) {
+  Attributes_AttributeValue value_pb;
+  *value_pb.mutable_timestamp_value() = CreateTimestamp(value);
+  (*attributes->mutable_attributes())[key] = value_pb;
+}
+
+void AttributesHelper::AddDuration(const std::string key,
+                                   std::chrono::nanoseconds value,
+                                   Attributes* attributes) {
+  Attributes_AttributeValue value_pb;
+  *value_pb.mutable_duration_value() = CreateDuration(value);
+  (*attributes->mutable_attributes())[key] = value_pb;
+}
+
+void AttributesHelper::AddStringMap(
+    const std::string key, std::map<std::string, std::string>&& string_map,
+    Attributes* attributes) {
+  Attributes_AttributeValue value_pb;
+  auto entries = value_pb.mutable_string_map_value()->mutable_entries();
+  for (const auto& map_it : string_map) {
+    (*entries)[map_it.first] = map_it.second;
   }
-  return ss.str();
-}
-}
-
-const std::string Attributes::kQuotaName = "quota.name";
-const std::string Attributes::kQuotaAmount = "quota.amount";
-
-Attributes::Value Attributes::StringValue(const std::string& str) {
-  Attributes::Value v;
-  v.type = Attributes::Value::STRING;
-  v.str_v = str;
-  return v;
-}
-
-Attributes::Value Attributes::BytesValue(const std::string& bytes) {
-  Attributes::Value v;
-  v.type = Attributes::Value::BYTES;
-  v.str_v = bytes;
-  return v;
-}
-
-Attributes::Value Attributes::Int64Value(int64_t value) {
-  Attributes::Value v;
-  v.type = Attributes::Value::INT64;
-  v.value.int64_v = value;
-  return v;
-}
-
-Attributes::Value Attributes::DoubleValue(double value) {
-  Attributes::Value v;
-  v.type = Attributes::Value::DOUBLE;
-  v.value.double_v = value;
-  return v;
-}
-
-Attributes::Value Attributes::BoolValue(bool value) {
-  Attributes::Value v;
-  v.type = Attributes::Value::BOOL;
-  v.value.bool_v = value;
-  return v;
-}
-
-Attributes::Value Attributes::TimeValue(
-    std::chrono::time_point<std::chrono::system_clock> value) {
-  Attributes::Value v;
-  v.type = Attributes::Value::TIME;
-  v.time_v = value;
-  return v;
-}
-
-Attributes::Value Attributes::DurationValue(std::chrono::nanoseconds value) {
-  Attributes::Value v;
-  v.type = Attributes::Value::DURATION;
-  v.duration_nanos_v = value;
-  return v;
-}
-
-Attributes::Value Attributes::StringMapValue(
-    std::map<std::string, std::string>&& string_map) {
-  Attributes::Value v;
-  v.type = Attributes::Value::STRING_MAP;
-  v.string_map_v.swap(string_map);
-  return v;
-}
-
-bool Attributes::Value::operator==(const Attributes::Value& v) const {
-  if (type != v.type) {
-    return false;
-  }
-  switch (type) {
-    case Attributes::Value::ValueType::STRING:
-    case Attributes::Value::ValueType::BYTES:
-      return str_v == v.str_v;
-      break;
-    case Attributes::Value::ValueType::INT64:
-      return value.int64_v == v.value.int64_v;
-      break;
-    case Attributes::Value::ValueType::DOUBLE:
-      return value.double_v == v.value.double_v;
-      break;
-    case Attributes::Value::ValueType::BOOL:
-      return value.bool_v == v.value.bool_v;
-      break;
-    case Attributes::Value::ValueType::TIME:
-      return time_v == v.time_v;
-      break;
-    case Attributes::Value::ValueType::DURATION:
-      return duration_nanos_v == v.duration_nanos_v;
-      break;
-    case Attributes::Value::ValueType::STRING_MAP:
-      return string_map_v == v.string_map_v;
-      break;
-  }
-  return false;
-}
-
-std::string Attributes::DebugString() const {
-  std::stringstream ss;
-  for (const auto& it : attributes) {
-    ss << it.first << ": ";
-    switch (it.second.type) {
-      case Attributes::Value::ValueType::STRING:
-        ss << "(STRING): " << it.second.str_v;
-        break;
-      case Attributes::Value::ValueType::BYTES:
-        ss << "(BYTES): " << escape(it.second.str_v);
-        break;
-      case Attributes::Value::ValueType::INT64:
-        ss << "(INT64): " << it.second.value.int64_v;
-        break;
-      case Attributes::Value::ValueType::DOUBLE:
-        ss << "(DOUBLE): " << it.second.value.double_v;
-        break;
-      case Attributes::Value::ValueType::BOOL:
-        ss << "(BOOL): " << it.second.value.bool_v;
-        break;
-      case Attributes::Value::ValueType::TIME:
-        ss << "(TIME ms): "
-           << std::chrono::duration_cast<std::chrono::microseconds>(
-                  it.second.time_v.time_since_epoch())
-                  .count();
-        break;
-      case Attributes::Value::ValueType::DURATION:
-        ss << "(DURATION nanos): " << it.second.duration_nanos_v.count();
-        break;
-      case Attributes::Value::ValueType::STRING_MAP:
-        ss << "(STRING MAP):";
-        for (const auto& map_it : it.second.string_map_v) {
-          ss << std::endl;
-          ss << "      " << map_it.first << ": " << map_it.second;
-        }
-        break;
-    }
-    ss << std::endl;
-  }
-  return ss.str();
+  (*attributes->mutable_attributes())[key] = value_pb;
 }
 
 }  // namespace mixer_client

@@ -17,69 +17,39 @@
 #define MIXERCLIENT_ATTRIBUTE_H
 
 #include <chrono>
-#include <functional>
 #include <map>
-#include <memory>
 #include <string>
+
+#include "mixer/v1/attributes.pb.h"
 
 namespace istio {
 namespace mixer_client {
 
-// A structure to represent a bag of attributes with
-// different types.
-struct Attributes {
-  // A structure to hold different types of value.
-  struct Value {
-    // Data type
-    enum ValueType {
-      STRING,
-      INT64,
-      DOUBLE,
-      BOOL,
-      TIME,
-      BYTES,
-      DURATION,
-      STRING_MAP
-    } type;
-
-    // Data value
-    union {
-      int64_t int64_v;
-      double double_v;
-      bool bool_v;
-    } value;
-    // Move types with constructor outside of union.
-    // It is not easy for union to support them.
-    std::string str_v;  // for both STRING and BYTES
-    std::chrono::time_point<std::chrono::system_clock> time_v;
-    std::chrono::nanoseconds duration_nanos_v;
-    std::map<std::string, std::string> string_map_v;
-
-    // compare operator
-    bool operator==(const Value& v) const;
-  };
-
-  // Helper functions to construct different value types
-  static Value StringValue(const std::string& str);
-  static Value BytesValue(const std::string& bytes);
-  static Value Int64Value(int64_t value);
-  static Value DoubleValue(double value);
-  static Value BoolValue(bool value);
-  static Value TimeValue(
-      std::chrono::time_point<std::chrono::system_clock> value);
-  static Value DurationValue(std::chrono::nanoseconds value);
-  static Value StringMapValue(std::map<std::string, std::string>&& string_map);
+// Helper functions to add attribute different value types
+struct AttributesHelper {
+  static void AddString(const std::string key, const std::string& str,
+                        ::istio::mixer::v1::Attributes* attributes);
+  static void AddBytes(const std::string key, const std::string& bytes,
+                       ::istio::mixer::v1::Attributes* attributes);
+  static void AddInt64(const std::string key, int64_t value,
+                       ::istio::mixer::v1::Attributes* attributes);
+  static void AddDouble(const std::string key, double value,
+                        ::istio::mixer::v1::Attributes* attributes);
+  static void AddBool(const std::string key, bool value,
+                      ::istio::mixer::v1::Attributes* attributes);
+  static void AddTime(const std::string key,
+                      std::chrono::time_point<std::chrono::system_clock> value,
+                      ::istio::mixer::v1::Attributes* attributes);
+  static void AddDuration(const std::string key, std::chrono::nanoseconds value,
+                          ::istio::mixer::v1::Attributes* attributes);
+  static void AddStringMap(const std::string key,
+                           std::map<std::string, std::string>&& string_map,
+                           ::istio::mixer::v1::Attributes* attributes);
 
   // The attribute key to fill "quota" field in the QuotaRequest.
   static const std::string kQuotaName;
   // The attribute key to fill "amount" field in the QuotaRequest.
   static const std::string kQuotaAmount;
-
-  // Generates a string for logging or debugging.
-  std::string DebugString() const;
-
-  // The attribute map.
-  std::map<std::string, Value> attributes;
 };
 
 }  // namespace mixer_client

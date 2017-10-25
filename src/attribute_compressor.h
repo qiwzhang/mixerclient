@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef MIXERCLIENT_ATTRIBUTE_CONVERTER_H
-#define MIXERCLIENT_ATTRIBUTE_CONVERTER_H
+#ifndef MIXERCLIENT_ATTRIBUTE_COMPRESSOR_H
+#define MIXERCLIENT_ATTRIBUTE_COMPRESSOR_H
 
 #include <unordered_map>
 
@@ -44,10 +44,10 @@ class GlobalDictionary {
   int top_index_;
 };
 
-// A attribute batch converter for report.
-class BatchConverter {
+// A attribute batch compressor for report.
+class BatchCompressor {
  public:
-  virtual ~BatchConverter() {}
+  virtual ~BatchCompressor() {}
 
   // Add an attribute set to the batch.
   // Return false if it could not be added for delta update.
@@ -61,13 +61,13 @@ class BatchConverter {
 };
 
 // Compress attributes.
-class AttributeConverter {
+class AttributeCompressor {
  public:
-  void Convert(const ::istio::mixer::v1::Attributes& attributes,
-               ::istio::mixer::v1::CompressedAttributes* attributes_pb) const;
+  void Compress(const ::istio::mixer::v1::Attributes& attributes,
+                ::istio::mixer::v1::CompressedAttributes* attributes_pb) const;
 
-  // Create a batch converter.
-  std::unique_ptr<BatchConverter> CreateBatchConverter() const;
+  // Create a batch compressor.
+  std::unique_ptr<BatchCompressor> CreateBatchCompressor() const;
 
   int global_word_count() const { return global_dict_.size(); }
 
@@ -81,4 +81,4 @@ class AttributeConverter {
 }  // namespace mixer_client
 }  // namespace istio
 
-#endif  // MIXERCLIENT_ATTRIBUTE_CONVERTER_H
+#endif  // MIXERCLIENT_ATTRIBUTE_COMPRESSOR_H

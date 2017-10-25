@@ -39,8 +39,8 @@ cc_library(
     name = "mixer_client_lib",
     srcs = [
         "src/attribute.cc",
-        "src/attribute_converter.cc",
-        "src/attribute_converter.h",
+        "src/attribute_compressor.cc",
+        "src/attribute_compressor.h",
         "src/check_cache.cc",
         "src/check_cache.h",
         "src/client_impl.cc",
@@ -77,10 +77,12 @@ cc_library(
 )
 
 cc_library(
-    name = "attribute_converter_lib",
+    name = "attribute_compressor_lib",
     srcs = [
-        "src/attribute_converter.cc",
-        "src/attribute_converter.h",
+        "include/attribute.h",
+        "src/attribute.cc",
+        "src/attribute_compressor.cc",
+        "src/attribute_compressor.h",
         "src/delta_update.cc",
         "src/delta_update.h",
         "src/global_dictionary.cc",
@@ -133,12 +135,12 @@ cc_test(
 )
 
 cc_test(
-    name = "attribute_converter_test",
+    name = "attribute_compressor_test",
     size = "small",
-    srcs = ["src/attribute_converter_test.cc"],
+    srcs = ["src/attribute_compressor_test.cc"],
     linkstatic = 1,
     deps = [
-        ":attribute_converter_lib",
+        ":attribute_compressor_lib",
         "//external:googletest_main",
     ],
 )
