@@ -38,7 +38,6 @@ genrule(
 cc_library(
     name = "mixer_client_lib",
     srcs = [
-        "src/attribute.cc",
         "src/attribute_compressor.cc",
         "src/attribute_compressor.h",
         "src/check_cache.cc",
@@ -62,7 +61,7 @@ cc_library(
         "utils/status_test_util.h",
     ],
     hdrs = [
-        "include/attribute.h",
+        "include/attributes_builder.h",
         "include/client.h",
         "include/options.h",
         "include/timer.h",
@@ -72,28 +71,6 @@ cc_library(
         ":simple_lru_cache",
 	"//prefetch:quota_prefetch_lib",
         "//external:boringssl_crypto",
-        "//external:mixer_api_cc_proto",
-    ],
-)
-
-cc_library(
-    name = "attribute_compressor_lib",
-    srcs = [
-        "include/attribute.h",
-        "src/attribute.cc",
-        "src/attribute_compressor.cc",
-        "src/attribute_compressor.h",
-        "src/delta_update.cc",
-        "src/delta_update.h",
-        "src/global_dictionary.cc",
-        "src/global_dictionary.h",
-        "utils/md5.cc",
-        "utils/md5.h",
-        "utils/protobuf.cc",
-        "utils/protobuf.h",
-        "utils/status_test_util.h",
-    ],
-    deps = [
         "//external:mixer_api_cc_proto",
     ],
 )
@@ -124,23 +101,12 @@ cc_test(
 )
 
 cc_test(
-    name = "attribute_test",
-    size = "small",
-    srcs = ["src/attribute_test.cc"],
-    linkstatic = 1,
-    deps = [
-        ":mixer_client_lib",
-        "//external:googletest_main",
-    ],
-)
-
-cc_test(
     name = "attribute_compressor_test",
     size = "small",
     srcs = ["src/attribute_compressor_test.cc"],
     linkstatic = 1,
     deps = [
-        ":attribute_compressor_lib",
+        ":mixer_client_lib",
         "//external:googletest_main",
     ],
 )

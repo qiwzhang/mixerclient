@@ -78,7 +78,7 @@ class MessageDictionary {
 }
 
 bool CompressByDict(const Attributes& attributes, MessageDictionary& dict,
-              DeltaUpdate& delta_update, CompressedAttributes* pb) {
+                    DeltaUpdate& delta_update, CompressedAttributes* pb) {
   delta_update.Start();
 
   // Fill attributes.

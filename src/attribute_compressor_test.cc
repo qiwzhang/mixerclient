@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#include "include/attribute.h"
 #include "src/attribute_compressor.h"
+#include "include/attributes_builder.h"
 
 #include <time.h>
 #include "google/protobuf/text_format.h"
@@ -187,34 +187,26 @@ class AttributeCompressorTest : public ::testing::Test {
     // Otherwise test is flaky since protobuf::map order is not deterministic
     // if a word has to be in the per-message dictionary, its index depends
     // on the order it created.
-    AttributesHelper::AddString(
-        "source.name", "connection.received.bytes_total", &attributes_);
-    AttributesHelper::AddBytes("source.ip", "text/html; charset=utf-8",
-                               &attributes_);
-    AttributesHelper::AddDouble("range", 99.9, &attributes_);
-    AttributesHelper::AddInt64("source.port", 35, &attributes_);
-    AttributesHelper::AddBool("keep-alive", true, &attributes_);
+    AttributesBuilder builder(attributes_);
+    builder.AddString("source.name", "connection.received.bytes_total")
+        .AddBytes("source.ip", "text/html; charset=utf-8")
+        .AddDouble("range", 99.9)
+        .AddInt64("source.port", 35)
+        .AddBool("keep-alive", true)
+        .AddString("source.user", "x-http-method-override")
+        .AddInt64("target.port", 8080);
 
-    // add some global words
-    AttributesHelper::AddString("source.user", "x-http-method-override",
-                                &attributes_);
-    AttributesHelper::AddInt64("target.port", 8080, &attributes_);
-
-    // default to Clock's epoch.
     std::chrono::time_point<std::chrono::system_clock> time_point;
-    AttributesHelper::AddTime("context.timestamp", time_point, &attributes_);
-
     std::chrono::seconds secs(5);
-    AttributesHelper::AddDuration(
-        "response.duration",
-        std::chrono::duration_cast<std::chrono::nanoseconds>(secs),
-        &attributes_);
+    builder.AddTimestamp("context.timestamp", time_point)
+        .AddDuration(
+            "response.duration",
+            std::chrono::duration_cast<std::chrono::nanoseconds>(secs));
 
     // JWT-token is only word not in the global dictionary.
     std::map<std::string, std::string> string_map = {
         {"authorization", "JWT-Token"}, {"content-type", "application/json"}};
-    AttributesHelper::AddStringMap("request.headers", std::move(string_map),
-                                   &attributes_);
+    builder.AddStringMap("request.headers", std::move(string_map));
   }
 
   Attributes attributes_;
@@ -245,14 +237,13 @@ TEST_F(AttributeCompressorTest, BatchCompressTest) {
   EXPECT_TRUE(batch_compressor->Add(attributes_));
 
   // modify some attributes
-  AttributesHelper::AddDouble("range", 123.99, &attributes_);
-  AttributesHelper::AddInt64("source.port", 135, &attributes_);
-  AttributesHelper::AddInt64("response.size", 111, &attributes_);
-  AttributesHelper::AddBool("keep-alive", false, &attributes_);
-
-  AttributesHelper::AddStringMap(
-      "request.headers",
-      {{"content-type", "application/json"}, {":method", "GET"}}, &attributes_);
+  AttributesBuilder builder(attributes_);
+  builder.AddDouble("range", 123.99)
+      .AddInt64("source.port", 135)
+      .AddInt64("response.size", 111)
+      .AddBool("keep-alive", false)
+      .AddStringMap("request.headers",
+                    {{"content-type", "application/json"}, {":method", "GET"}});
 
   // Since there is no deletion, batch is good
   EXPECT_TRUE(batch_compressor->Add(attributes_));
