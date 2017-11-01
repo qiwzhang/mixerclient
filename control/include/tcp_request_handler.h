@@ -13,27 +13,26 @@
  * limitations under the License.
  */
 
-#ifndef MIXERCONTROL_HTTP_REQUEST_HANDLER_H
-#define MIXERCONTROL_HTTP_REQUEST_HANDLER_H
+#ifndef MIXERCONTROL_TCP_REQUEST_HANDLER_H
+#define MIXERCONTROL_TCP_REQUEST_HANDLER_H
 
-#include "http_report_data.h"
 #include "include/client.h"
+#include "tcp_report_data.h"
 
 namespace istio {
 namespace mixer_control {
 
-// Interface class to handle a HTTP request.
-class HttpRequestHandler {
+// Interface class to handle a TCP request.
+class TcpRequestHandler {
  public:
   virtual ::istio::mixer_client::CancelFunc Check(
-      ::istio::mixer_client::TransportCheckFunc transport,
       ::istio::mixer_client::DoneFunc on_done) = 0;
 
   // Make remote report call.
-  virtual void Report(std::unique_ptr<HttpReportData> report_data) = 0;
+  virtual void Report(std::unique_ptr<TcpReportData> report_data) = 0;
 };
 
 }  // namespace mixer_control
 }  // namespace istio
 
-#endif  // MIXERCONTROL_HTTP_REQUEST_HANDLER_H
+#endif  // MIXERCONTROL_TCP_REQUEST_HANDLER_H

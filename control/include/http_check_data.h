@@ -16,6 +16,8 @@
 #ifndef MIXERCONTROL_HTTP_CHECK_DATA_H
 #define MIXERCONTROL_HTTP_CHECK_DATA_H
 
+#include <string>
+
 namespace istio {
 namespace mixer_control {
 
@@ -47,7 +49,8 @@ class HttpCheckData {
     HEADER_METHOD,
     HEADER_REFERER,
   };
-  virtual bool GetHeader(HeaderType header_type, std::string* value) const = 0;
+  virtual bool GetRequestHeader(HeaderType header_type,
+                                std::string* value) const = 0;
 };
 
 }  // namespace mixer_control

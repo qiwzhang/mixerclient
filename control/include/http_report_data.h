@@ -29,7 +29,7 @@ class HttpReportData {
     int response_code;
   };
   virtual void GetReportInfo(ReportInfo* info) const = 0;
-  
+
   // Get reqeust HTTP headers
   virtual std::map<std::string, std::string> GetResponseHeaders() const = 0;
 };

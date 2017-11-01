@@ -13,27 +13,34 @@
  * limitations under the License.
  */
 
-#ifndef MIXERCONTROL_HTTP_REQUEST_HANDLER_H
-#define MIXERCONTROL_HTTP_REQUEST_HANDLER_H
+#ifndef MIXERCONTROL_HTTP_REQUEST_HANDLER_IMPL_H
+#define MIXERCONTROL_HTTP_REQUEST_HANDLER_IMPL_H
 
-#include "http_report_data.h"
-#include "include/client.h"
+#include "control/include/http_request_handler.h"
+#include "http_reqeust_context.h"
 
 namespace istio {
 namespace mixer_control {
 
-// Interface class to handle a HTTP request.
-class HttpRequestHandler {
+class HttpRequestHandlerImpl : public HttpRequestHandler {
  public:
-  virtual ::istio::mixer_client::CancelFunc Check(
-      ::istio::mixer_client::TransportCheckFunc transport,
-      ::istio::mixer_client::DoneFunc on_done) = 0;
+  HttpRequestHandlerImpl(
+      std::unique_ptr<HttpCheckData> check_data,
+      std::shared_ptr<ClientContext> client_context,
+      std::unique_ptr<::istio::mixer::v1::config::client::MixerControlConfig>
+          per_route_config);
 
-  // Make remote report call.
-  virtual void Report(std::unique_ptr<HttpReportData> report_data) = 0;
+  ::istio::mixer_client::CancelFunc Check(
+      ::istio::mixer_client::TransportCheckFunc transport,
+      ::istio::mixer_client::DoneFunc on_done) override;
+
+  void Report(std::unique_ptr<HttpReportData> report_data) override;
+
+ private:
+  std::unique_ptr<RequestContext> request_context_;
 };
 
 }  // namespace mixer_control
 }  // namespace istio
 
-#endif  // MIXERCONTROL_HTTP_REQUEST_HANDLER_H
+#endif  // MIXERCONTROL_HTTP_REQUEST_HANDLER_IMPL_H
