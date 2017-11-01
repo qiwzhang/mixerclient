@@ -16,7 +16,7 @@
 #ifndef MIXERCONTROL_ATTRIBUTE_NAMES_H
 #define MIXERCONTROL_ATTRIBUTE_NAMES_H
 
-#include "control/include/http_request_handler.h"
+#include <string>
 
 namespace istio {
 namespace mixer_control {

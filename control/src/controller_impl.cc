@@ -13,39 +13,32 @@
  * limitations under the License.
  */
 
-#include "control/src/http_request_handler_impl.h"
+#include "controller_impl.h"
+#include "http_request_handler_impl.h"
 
-using ::google::protobuf::util::Status;
-using ::google::protobuf::util::error::Code;
-using ::istio::mixer::v1::Attributes;
-using ::istio::mixer::v1::config::client::MixerFilterConfig;
 using ::istio::mixer::v1::config::client::MixerControlConfig;
-using ::istio::mixer_client::CheckOptions;
-using ::istio::mixer_client::ReportOptions;
-using ::istio::mixer_client::QuotaOptions;
-using ::istio::mixer_client::CancelFunc;
-using ::istio::mixer_client::TransportCheckFunc;
-using ::istio::mixer_client::DoneFunc;
 
 namespace istio {
 namespace mixer_control {
 
 ControllerImpl::ControllerImpl(const Controller::FactoryData& data) {
-  client_context.reset(new ClientContext(data));
+  client_context_.reset(new ClientContext(data));
 }
 
 std::unique_ptr<HttpRequestHandler> ControllerImpl::CreateHttpRequestHandler(
     std::unique_ptr<HttpCheckData> check_data,
     std::unique_ptr<MixerControlConfig> per_route_config) {
   return std::unique_ptr<HttpRequestHandler>(new HttpRequestHandlerImpl(
-      check_data, client_context_, std::move(per_route_config)));
+      std::move(check_data), client_context_, std::move(per_route_config)));
 }
 
+#if 0  
 std::unique_ptr<TcpRequestHandler> ControllerImpl::CreateTcpRequestHandler(
     std::unique_ptr<TcpCheckData> check_data,
     const PerRouteConfig& per_route_config) {
     return std::unique_ptr<TcpRequestHandler>(new TcpRequestHandlerImpl(client_context_);
 }
+#endif
 
 std::unique_ptr<Controller> Controller::Create(
     const FactoryData& factory_data) {

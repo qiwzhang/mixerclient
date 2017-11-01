@@ -16,8 +16,9 @@
 #ifndef MIXERCONTROL_HTTP_REQUEST_HANDLER_IMPL_H
 #define MIXERCONTROL_HTTP_REQUEST_HANDLER_IMPL_H
 
+#include "client_context.h"
 #include "control/include/http_request_handler.h"
-#include "http_reqeust_context.h"
+#include "http_request_context.h"
 
 namespace istio {
 namespace mixer_control {
@@ -37,7 +38,7 @@ class HttpRequestHandlerImpl : public HttpRequestHandler {
   void Report(std::unique_ptr<HttpReportData> report_data) override;
 
  private:
-  std::unique_ptr<RequestContext> request_context_;
+  std::unique_ptr<HttpRequestContext> request_context_;
 };
 
 }  // namespace mixer_control

@@ -27,9 +27,6 @@ using ::istio::mixer::v1::Attributes_StringMap;
 using ::istio::mixer::v1::config::client::MixerFilterConfig;
 using ::istio::mixer::v1::config::client::MixerControlConfig;
 using ::istio::mixer_client::AttributesBuilder;
-using ::istio::mixer_client::CheckOptions;
-using ::istio::mixer_client::ReportOptions;
-using ::istio::mixer_client::QuotaOptions;
 using ::istio::mixer_client::CancelFunc;
 using ::istio::mixer_client::TransportCheckFunc;
 using ::istio::mixer_client::DoneFunc;
@@ -38,16 +35,15 @@ namespace istio {
 namespace mixer_control {
 namespace {
 
-/
-    Pilot mesh attributes with the suffix will be treated as ipv4.
-    // They will use BYTES attribute type.
-    const std::string kIPSuffix = ".ip";
+// Pilot mesh attributes with the suffix will be treated as ipv4.
+// They will use BYTES attribute type.
+const std::string kIPSuffix = ".ip";
 
 // Mesh attributes from Pilot are all string type.
 // The attributes with ".ip" suffix will be treated
 // as ipv4 and use BYTES attribute type.
 void SetMeshAttribute(const std::string& name, const std::string& value,
-                      Attributes* attr) const {
+                      Attributes* attr) {
   // Check with ".ip" suffix,
   if (name.length() <= kIPSuffix.length() ||
       name.compare(name.length() - kIPSuffix.length(), kIPSuffix.length(),
@@ -79,7 +75,7 @@ void SetMeshAttribute(const std::string& name, const std::string& value,
 
 }  //  namespace
 
-HttpRequestContext(std::unique_ptr<HttpCheckData> check_data,
+HttpRequestContext::HttpRequestContext(std::unique_ptr<HttpCheckData> check_data,
                    std::shared_ptr<ClientContext> client_context,
                    std::unique_ptr<MixerControlConfig> per_route_config)
     : check_data_(std::move(check_data)),
@@ -87,26 +83,28 @@ HttpRequestContext(std::unique_ptr<HttpCheckData> check_data,
       per_route_config_(std::move(per_route_config)) {}
 
 void HttpRequestContext::FillRequestHeaderAttributes() {
-  AttributesBuilder builder(&attributes);
+  AttributesBuilder builder(&attributes_);
   std::map<std::string, std::string> headers = check_data_->GetRequestHeaders();
   builder.AddStringMap(AttributeName::kRequestHeaders, headers);
 
-  struct TopLevelHeader {
-    aderType header_type;
+  struct TopLevelAttr {
+    HttpCheckData::HeaderType header_type;
     const std::string& name;
     bool set_default;
     const char* default_value;
   };
-  static TopLevelheaders top_level_atts[] = {
-      {HEADER_PATH, AttributeName::kRequestPath, true, ""},
-      {HEADER_HOST, AttributeName::kRequestHost, true, ""},
-      {HEADER_SCHEME, AttributeName::kRequestScheme, true, "http"},
-      {HEADER_USER_AGENT, AttributeName::kRequestUserAgent, false, ""},
-      {HEADER_METHOD, AttributeName::kRequestMethod, false, ""},
-      {HEADER_REFERER, AttributeName::kRequestReferer, false, ""}};
-  for (const auto& it : top_level_atts) {
+  static TopLevelAttr attrs[] = {
+    {HttpCheckData::HEADER_PATH, AttributeName::kRequestPath, true, ""},
+    {HttpCheckData::HEADER_HOST, AttributeName::kRequestHost, true, ""},
+    {HttpCheckData::HEADER_SCHEME, AttributeName::kRequestScheme, true, "http"},
+    {HttpCheckData::HEADER_USER_AGENT, AttributeName::kRequestUserAgent, false, ""},
+    {HttpCheckData::HEADER_METHOD, AttributeName::kRequestMethod, false, ""},
+    {HttpCheckData::HEADER_REFERER, AttributeName::kRequestReferer, false, ""},
+  };
+  
+  for (const auto& it : attrs) {
     std::string data;
-    if (request_data()->GetRequestHeader(it.header_type, &data)) {
+    if (check_data_->FindRequestHeader(it.header_type, &data)) {
       builder.AddString(it.name, data);
     } else if (it.set_default) {
       builder.AddString(it.name, it.default_value);
@@ -126,7 +124,7 @@ void HttpRequestContext::AddForwardedAttributes(
   Attributes_StringMap forwarded_attributes;
   if (forwarded_attributes.ParseFromString(forwarded_data)) {
     for (const auto& it : forwarded_attributes.entries()) {
-      SetMeshAttribute(it.first, it.second, &attributes);
+      SetMeshAttribute(it.first, it.second, &attributes_);
     }
   }
 }
@@ -134,25 +132,25 @@ void HttpRequestContext::AddForwardedAttributes(
 void HttpRequestContext::ExtractCheckAttributes() {
   // Quota should be part of service_config().mixer_attributes.
   if (client_context()->config().has_mixer_attributes()) {
-    attributes_.MergeFrom(client_context()->onfig().mixer_attributes());
+    attributes_.MergeFrom(client_context()->config().mixer_attributes());
   }
-  if (pre_route_config_->has_mixer_attributes()) {
-    attributes_.MergeFrom(pre_route_config_->mixer_attributes());
+  if (per_route_config_->has_mixer_attributes()) {
+    attributes_.MergeFrom(per_route_config_->mixer_attributes());
   }
 
   FillRequestHeaderAttributes();
 
-  AttributesBuilder builder(&attributes);
+  AttributesBuilder builder(&attributes_);
 
   std::string source_ip;
   int source_port;
-  if (check_data_->GetSourceIpPort(source_ip, source_port)) {
+  if (check_data_->GetSourceIpPort(&source_ip, &source_port)) {
     builder.AddBytes(AttributeName::kSourceIp, source_ip);
     builder.AddInt64(AttributeName::kSourcePort, source_port);
   }
 
   std::string source_user;
-  if (check_data()->GetSourceUser(&source_user)) {
+  if (check_data_->GetSourceUser(&source_user)) {
     builder.AddString(AttributeName::kSourceUser, source_user);
   }
   builder.AddTimestamp(AttributeName::kRequestTime,
@@ -170,7 +168,7 @@ void HttpRequestContext::ForwardAttributes() {
 
 void HttpRequestContext::ExtractReportAttributes(
     std::unique_ptr<HttpReportData> report_data) {
-  AttributesBuilder builder(&attributes);
+  AttributesBuilder builder(&attributes_);
   std::map<std::string, std::string> headers =
       report_data->GetResponseHeaders();
   builder.AddStringMap(AttributeName::kResponseHeaders, headers);
@@ -180,8 +178,8 @@ void HttpRequestContext::ExtractReportAttributes(
 
   HttpReportData::ReportInfo info;
   report_data->GetReportInfo(&info);
-  builder.AddInt64(AttributeName::kRequestSize, data.received_bytes);
-  builder.AddInt64(AttributeName::kResponseSize, data.send_bytes);
+  builder.AddInt64(AttributeName::kRequestSize, info.received_bytes);
+  builder.AddInt64(AttributeName::kResponseSize, info.send_bytes);
   builder.AddDuration(AttributeName::kResponseDuration, info.duration);
   if (check_status_code_ != 0) {
     builder.AddInt64(AttributeName::kResponseCode, check_status_code_);
@@ -193,7 +191,7 @@ void HttpRequestContext::ExtractReportAttributes(
 CancelFunc HttpRequestContext::Check(TransportCheckFunc transport,
                                      DoneFunc on_done) {
   std::string forwarded_data;
-  bool has_forwarded_data = check_data_->ExtractIstoAttributes(&forwarded_data);
+  bool has_forwarded_data = check_data_->ExtractIstioAttributes(&forwarded_data);
 
   if (per_route_config_->enable_mixer_check() ||
       per_route_config_->enable_mixer_report()) {
@@ -206,18 +204,32 @@ CancelFunc HttpRequestContext::Check(TransportCheckFunc transport,
 
   ForwardAttributes();
 
-  if (per_route_config_->enable_mixer_check()) {
-    return SendCheck(transport, on_done);
+  if (!per_route_config_->enable_mixer_check()) {
+    on_done(Status::OK);
+    return nullptr;
   }
-  return nullptr;
+
+  auto my_on_done =
+    [this, on_done](const ::google::protobuf::util::Status& status) {
+    // save the check status code
+    check_status_code_ = status.error_code();
+    on_done(status);
+  };
+  return client_context()->SendCheck(attributes_, transport, my_on_done);
 }
 
 void HttpRequestContext::Report(std::unique_ptr<HttpReportData> report_data) {
-  if (!per_route_config_->enable_mixer_report() || attributes_.empty()) {
+  // If attributes is empty, it means Mixer filter is not called.
+  // not call Report for this case.
+  // Report() is called at Log stage which can be called even mixer filter
+  // is not called yet.
+  if (!per_route_config_->enable_mixer_report() ||
+      attributes_.attributes_size() == 0) {
     return;
   }
-  ExtractReportAttributes(report_data);
-  SendReport();
+  ExtractReportAttributes(std::move(report_data));
+  
+  client_context()->SendReport(attributes_);
 }
 
 }  // namespace mixer_control

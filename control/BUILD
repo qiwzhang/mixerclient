@@ -15,7 +15,7 @@
 licenses(["notice"])
 
 cc_library(
-    name = "mixer_client_lib",
+    name = "mixer_control_lib",
     srcs = [
         "src/attribute_names.cc",
         "src/attribute_names.h",
@@ -23,6 +23,8 @@ cc_library(
         "src/client_context.h",
         "src/controller_impl.cc",
         "src/controller_impl.h",
+        "src/http_request_context.cc",
+        "src/http_request_context.h",
         "src/http_request_handler_impl.cc",
         "src/http_request_handler_impl.h",
     ],

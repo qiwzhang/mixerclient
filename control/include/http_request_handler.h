@@ -16,6 +16,7 @@
 #ifndef MIXERCONTROL_HTTP_REQUEST_HANDLER_H
 #define MIXERCONTROL_HTTP_REQUEST_HANDLER_H
 
+#include "http_check_data.h"
 #include "http_report_data.h"
 #include "include/client.h"
 
@@ -25,6 +26,8 @@ namespace mixer_control {
 // Interface class to handle a HTTP request.
 class HttpRequestHandler {
  public:
+  virtual ~HttpRequestHandler() {}
+
   virtual ::istio::mixer_client::CancelFunc Check(
       ::istio::mixer_client::TransportCheckFunc transport,
       ::istio::mixer_client::DoneFunc on_done) = 0;

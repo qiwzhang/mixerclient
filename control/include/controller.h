@@ -16,19 +16,32 @@
 #ifndef MIXERCONTROL_CONTROLLER_H
 #define MIXERCONTROL_CONTROLLER_H
 
+#include "http_request_handler.h"
 #include "include/client.h"
 #include "mixer/v1/config/client/mixer_filter_config.pb.h"
 
-#include "http_check_data.h"
-#include "http_request_handler.h"
+#if 0
 #include "tcp_check_data.h"
 #include "tcp_request_handler.h"
+#endif
 
 namespace istio {
 namespace mixer_control {
 
 class Controller {
  public:
+  virtual ~Controller() {}
+
+  virtual std::unique_ptr<HttpRequestHandler> CreateHttpRequestHandler(
+      std::unique_ptr<HttpCheckData> check_data,
+      std::unique_ptr<::istio::mixer::v1::config::client::MixerControlConfig>
+          per_route_config) = 0;
+
+#if 0
+  virtual std::unique_ptr<TcpRequestHandler> CreateTcpRequestHandler(
+      std::unique_ptr<TcpCheckData> check_data) = 0;
+#endif
+
   struct FactoryData {
     // Mixer filter config
     const ::istio::mixer::v1::config::client::MixerFilterConfig& mixer_config;
@@ -39,14 +52,6 @@ class Controller {
     ::istio::mixer_client::TimerCreateFunc timer_create_func;
     ::istio::mixer_client::UUIDGenerateFunc uuid_generate_func;
   };
-
-  virtual std::unique_ptr<HttpRequestHandler> CreateHttpRequestHandler(
-      std::unique_ptr<HttpCheckData> check_data,
-      std::unique_ptr<::istio::mixer::v1::config::client::MixerControlConfig>
-          per_route_config) = 0;
-
-  virtual std::unique_ptr<TcpRequestHandler> CreateTcpRequestHandler(
-      std::unique_ptr<TcpCheckData> check_data) = 0;
 
   static std::unique_ptr<Controller> Create(const FactoryData& factory_data);
 };

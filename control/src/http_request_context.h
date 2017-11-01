@@ -13,9 +13,11 @@
  * limitations under the License.
  */
 
-#ifndef MIXERCONTROL_HTTP_REQUEST_HANDLER_IMPL_H
-#define MIXERCONTROL_HTTP_REQUEST_HANDLER_IMPL_H
+#ifndef MIXERCONTROL_HTTP_REQUEST_CONTEXT_H
+#define MIXERCONTROL_HTTP_REQUEST_CONTEXT_H
 
+#include "client_context.h"
+#include "control/include/http_check_data.h"
 #include "control/include/http_request_handler.h"
 
 namespace istio {
@@ -30,30 +32,19 @@ class HttpRequestContext {
       std::unique_ptr<::istio::mixer::v1::config::client::MixerControlConfig>
           per_route_config);
 
-  ClientContext* client_contex() { return client_context_.get(); }
+  ClientContext* client_context() { return client_context_.get(); }
 
-  ::istio::mixer::v1::CancelFunc Check(
-      ::istio::mixer::v1::TransportCheckFunc transport,
-      ::istio::mixer::v1::DoneFunc on_done);
+  ::istio::mixer_client::CancelFunc Check(
+      ::istio::mixer_client::TransportCheckFunc transport,
+      ::istio::mixer_client::DoneFunc on_done);
+
   void Report(std::unique_ptr<HttpReportData> report_data);
 
  private:
-  ::istio::mixer::v1::CancelFunc SendCheck(
-      ::istio::mixer::v1::TransportCheckFunc transport,
-      ::istio::mixer::v1::DoneFunc on_done) {
-    auto my_on_done =
-        [this, on_done](const ::google::protobuf::util::Status& status) {
-          // save the check status code
-          check_status_code_ = status.code();
-          on_done(status);
-        } return client_context()
-            ->SendCheck(attributes_, transport, my_on_done);
-  }
-
-  void SendReport() { client_context()->SendReport(attributes_); }
-
   void ExtractCheckAttributes();
   void ExtractReportAttributes(std::unique_ptr<HttpReportData> report_data);
+  void ForwardAttributes();
+  void AddForwardedAttributes(const std::string& forwarded_data);
   void FillRequestHeaderAttributes();
 
   std::unique_ptr<HttpCheckData> check_data_;
@@ -68,4 +59,4 @@ class HttpRequestContext {
 }  // namespace mixer_control
 }  // namespace istio
 
-#endif  // MIXERCONTROL_HTTP_REQUEST_HANDLER_IMPL_H
+#endif  // MIXERCONTROL_HTTP_REQUEST_CONTEXT_H

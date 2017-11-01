@@ -16,6 +16,7 @@
 #ifndef MIXERCONTROL_HTTP_CHECK_DATA_H
 #define MIXERCONTROL_HTTP_CHECK_DATA_H
 
+#include <map>
 #include <string>
 
 namespace istio {
@@ -24,11 +25,13 @@ namespace mixer_control {
 // Interface class to extract data for Mixer check call.
 class HttpCheckData {
  public:
+  virtual ~HttpCheckData() {}
+
   // Find "x-istio-attributes" headers, if found base64 decode
   // its value and remove it from the headers.
   virtual bool ExtractIstioAttributes(std::string* data) = 0;
   // base64 encode data, and add it to the HTTP header.
-  virtual void AddIstoAttributes(const std::string& data) = 0;
+  virtual void AddIstioAttributes(const std::string& data) = 0;
 
   // Get client tcp connection ip and port.
   virtual bool GetSourceIpPort(std::string* ip, int* port) const = 0;
@@ -49,8 +52,8 @@ class HttpCheckData {
     HEADER_METHOD,
     HEADER_REFERER,
   };
-  virtual bool GetRequestHeader(HeaderType header_type,
-                                std::string* value) const = 0;
+  virtual bool FindRequestHeader(HeaderType header_type,
+                                 std::string* value) const = 0;
 };
 
 }  // namespace mixer_control

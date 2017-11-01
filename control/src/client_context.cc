@@ -19,16 +19,18 @@ using ::google::protobuf::util::Status;
 using ::google::protobuf::util::error::Code;
 using ::istio::mixer::v1::Attributes;
 using ::istio::mixer::v1::config::client::MixerFilterConfig;
+using ::istio::mixer_client::CancelFunc;
 using ::istio::mixer_client::CheckOptions;
+using ::istio::mixer_client::DoneFunc;
+using ::istio::mixer_client::MixerClientOptions;
 using ::istio::mixer_client::ReportOptions;
 using ::istio::mixer_client::QuotaOptions;
-using ::istio::mixer_client::CancelFunc;
 using ::istio::mixer_client::TransportCheckFunc;
-using ::istio::mixer_client::DoneFunc;
 
 namespace istio {
 namespace mixer_control {
 namespace {
+
 CheckOptions GetJustCheckOptions(const MixerFilterConfig& config) {
   if (config.disable_check_cache()) {
     return CheckOptions(0);
@@ -61,10 +63,10 @@ ReportOptions GetReportOptions(const MixerFilterConfig& config) {
 }  // namespace
 
 ClientContext::ClientContext(const Controller::FactoryData& data)
-    : mixer_config_(data.mixer_config) {
-  MixerClientOptions options(GetCheckOptions(mixer_config_),
-                             GetReportOptions(mixer_config_),
-                             GetQuotaOptions(mixer_config_));
+    : config_(data.mixer_config) {
+  MixerClientOptions options(GetCheckOptions(config_),
+                             GetReportOptions(config_),
+                             GetQuotaOptions(config_));
   options.check_transport = data.check_transport;
   options.report_transport = data.report_transport;
   options.timer_create_func = data.timer_create_func;
@@ -77,8 +79,7 @@ CancelFunc ClientContext::SendCheck(const Attributes& attributes,
                                     TransportCheckFunc transport,
                                     DoneFunc on_done) {
   if (!mixer_client_) {
-    on_done(
-        Status(StatusCode::INVALID_ARGUMENT, "Missing mixer_server cluster"));
+    on_done(Status(Code::INVALID_ARGUMENT, "Missing mixer_server cluster"));
     return nullptr;
   }
   // TODO: add debug message

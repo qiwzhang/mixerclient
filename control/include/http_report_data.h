@@ -16,12 +16,20 @@
 #ifndef MIXERCONTROL_HTTP_REPORT_DATA_H
 #define MIXERCONTROL_HTTP_REPORT_DATA_H
 
+#include <chrono>
+#include <map>
+
 namespace istio {
 namespace mixer_control {
 
 // Interface class to extract data for Mixer report call.
 class HttpReportData {
  public:
+  virtual ~HttpReportData() {}
+
+  // Get reqeust HTTP headers
+  virtual std::map<std::string, std::string> GetResponseHeaders() const = 0;
+
   struct ReportInfo {
     uint64_t send_bytes;
     uint64_t received_bytes;
@@ -29,9 +37,6 @@ class HttpReportData {
     int response_code;
   };
   virtual void GetReportInfo(ReportInfo* info) const = 0;
-
-  // Get reqeust HTTP headers
-  virtual std::map<std::string, std::string> GetResponseHeaders() const = 0;
 };
 
 }  // namespace mixer_control
