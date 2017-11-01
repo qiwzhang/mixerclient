@@ -33,10 +33,8 @@ class ControllerImpl : public Controller {
       std::unique_ptr<::istio::mixer::v1::config::client::MixerControlConfig>
           per_route_config) override;
 
-#if 0  
   std::unique_ptr<TcpRequestHandler> CreateTcpRequestHandler(
-      std::unique_ptr<TcpRequestData> request) override;
-#endif
+      std::unique_ptr<TcpCheckData> check_data) override;
 
  private:
   std::shared_ptr<ClientContext> client_context_;

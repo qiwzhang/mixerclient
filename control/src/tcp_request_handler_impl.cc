@@ -13,31 +13,27 @@
  * limitations under the License.
  */
 
-#include "http_request_handler_impl.h"
+#include "tcp_request_handler_impl.h"
 
-using ::istio::mixer::v1::config::client::MixerControlConfig;
 using ::istio::mixer_client::CancelFunc;
-using ::istio::mixer_client::TransportCheckFunc;
 using ::istio::mixer_client::DoneFunc;
 
 namespace istio {
 namespace mixer_control {
 
-HttpRequestHandlerImpl::HttpRequestHandlerImpl(
-    std::unique_ptr<HttpCheckData> check_data,
-    std::shared_ptr<ClientContext> client_context,
-    std::unique_ptr<MixerControlConfig> per_route_config) {
-  request_context_.reset(new HttpRequestContext(
-      std::move(check_data), client_context, std::move(per_route_config)));
+TcpRequestHandlerImpl::TcpRequestHandlerImpl(
+    std::unique_ptr<TcpCheckData> check_data,
+    std::shared_ptr<ClientContext> client_context) {
+  request_context_.reset(
+      new TcpRequestContext(std::move(check_data), client_context));
 }
 
-CancelFunc HttpRequestHandlerImpl::Check(TransportCheckFunc transport,
-                                         DoneFunc on_done) {
-  return request_context_->Check(transport, on_done);
+CancelFunc TcpRequestHandlerImpl::Check(DoneFunc on_done) {
+  return request_context_->Check(on_done);
 }
 
 // Make remote report call.
-void HttpRequestHandlerImpl::Report(std::unique_ptr<HttpReportData> response) {
+void TcpRequestHandlerImpl::Report(std::unique_ptr<TcpReportData> response) {
   request_context_->Report(std::move(response));
 }
 

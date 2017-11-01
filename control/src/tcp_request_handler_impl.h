@@ -13,29 +13,31 @@
  * limitations under the License.
  */
 
-#ifndef MIXERCONTROL_TCP_REPORT_DATA_H
-#define MIXERCONTROL_TCP_REPORT_DATA_H
+#ifndef MIXERCONTROL_TCP_REQUEST_HANDLER_IMPL_H
+#define MIXERCONTROL_TCP_REQUEST_HANDLER_IMPL_H
+
+#include "client_context.h"
+#include "control/include/tcp_request_handler.h"
+#include "tcp_request_context.h"
 
 namespace istio {
 namespace mixer_control {
 
-// Interface class to extract data for Mixer report call.
-class TcpReportData {
+class TcpRequestHandlerImpl : public TcpRequestHandler {
  public:
-  virtual ~TcpReportData() {}
+  TcpRequestHandlerImpl(std::unique_ptr<TcpCheckData> check_data,
+                        std::shared_ptr<ClientContext> client_context);
 
-  // Get destination tcp connection ip and port.
-  virtual bool GetDestinationIpPort(std::string* ip, int* port) const = 0;
+  ::istio::mixer_client::CancelFunc Check(
+      ::istio::mixer_client::DoneFunc on_done) override;
 
-  struct ReportInfo {
-    uint64_t send_bytes;
-    uint64_t received_bytes;
-    std::chrono::nanoseconds duration;
-  };
-  virtual void GetReportInfo(ReportInfo* info) const = 0;
+  void Report(std::unique_ptr<TcpReportData> report_data) override;
+
+ private:
+  std::unique_ptr<TcpRequestContext> request_context_;
 };
 
 }  // namespace mixer_control
 }  // namespace istio
 
-#endif  // MIXERCONTROL_TCP_REPORT_DATA_H
+#endif  // MIXERCONTROL_TCP_REQUEST_HANDLER_IMPL_H

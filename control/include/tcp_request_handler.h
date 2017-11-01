@@ -17,6 +17,7 @@
 #define MIXERCONTROL_TCP_REQUEST_HANDLER_H
 
 #include "include/client.h"
+#include "tcp_check_data.h"
 #include "tcp_report_data.h"
 
 namespace istio {
@@ -25,6 +26,8 @@ namespace mixer_control {
 // Interface class to handle a TCP request.
 class TcpRequestHandler {
  public:
+  virtual ~TcpRequestHandler() {}
+
   virtual ::istio::mixer_client::CancelFunc Check(
       ::istio::mixer_client::DoneFunc on_done) = 0;
 

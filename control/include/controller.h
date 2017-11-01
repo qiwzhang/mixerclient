@@ -19,11 +19,7 @@
 #include "http_request_handler.h"
 #include "include/client.h"
 #include "mixer/v1/config/client/mixer_filter_config.pb.h"
-
-#if 0
-#include "tcp_check_data.h"
 #include "tcp_request_handler.h"
-#endif
 
 namespace istio {
 namespace mixer_control {
@@ -37,10 +33,8 @@ class Controller {
       std::unique_ptr<::istio::mixer::v1::config::client::MixerControlConfig>
           per_route_config) = 0;
 
-#if 0
   virtual std::unique_ptr<TcpRequestHandler> CreateTcpRequestHandler(
       std::unique_ptr<TcpCheckData> check_data) = 0;
-#endif
 
   struct FactoryData {
     // Mixer filter config

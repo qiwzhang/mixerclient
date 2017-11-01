@@ -16,12 +16,16 @@
 #ifndef MIXERCONTROL_TCP_CHECK_DATA_H
 #define MIXERCONTROL_TCP_CHECK_DATA_H
 
+#include <string>
+
 namespace istio {
 namespace mixer_control {
 
 // Interface class to extract data for Mixer check call.
 class TcpCheckData {
  public:
+  virtual ~TcpCheckData() {}
+
   // Get client tcp connection ip and port.
   virtual bool GetSourceIpPort(std::string* ip, int* port) const = 0;
 

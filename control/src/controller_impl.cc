@@ -15,6 +15,7 @@
 
 #include "controller_impl.h"
 #include "http_request_handler_impl.h"
+#include "tcp_request_handler_impl.h"
 
 using ::istio::mixer::v1::config::client::MixerControlConfig;
 
@@ -32,13 +33,11 @@ std::unique_ptr<HttpRequestHandler> ControllerImpl::CreateHttpRequestHandler(
       std::move(check_data), client_context_, std::move(per_route_config)));
 }
 
-#if 0  
 std::unique_ptr<TcpRequestHandler> ControllerImpl::CreateTcpRequestHandler(
-    std::unique_ptr<TcpCheckData> check_data,
-    const PerRouteConfig& per_route_config) {
-    return std::unique_ptr<TcpRequestHandler>(new TcpRequestHandlerImpl(client_context_);
+    std::unique_ptr<TcpCheckData> check_data) {
+  return std::unique_ptr<TcpRequestHandler>(
+      new TcpRequestHandlerImpl(std::move(check_data), client_context_));
 }
-#endif
 
 std::unique_ptr<Controller> Controller::Create(
     const FactoryData& factory_data) {
