@@ -75,9 +75,10 @@ void SetMeshAttribute(const std::string& name, const std::string& value,
 
 }  //  namespace
 
-HttpRequestContext::HttpRequestContext(std::unique_ptr<HttpCheckData> check_data,
-                   std::shared_ptr<ClientContext> client_context,
-                   std::unique_ptr<MixerControlConfig> per_route_config)
+HttpRequestContext::HttpRequestContext(
+    std::unique_ptr<HttpCheckData> check_data,
+    std::shared_ptr<ClientContext> client_context,
+    std::unique_ptr<MixerControlConfig> per_route_config)
     : check_data_(std::move(check_data)),
       client_context_(client_context),
       per_route_config_(std::move(per_route_config)) {}
@@ -94,14 +95,17 @@ void HttpRequestContext::FillRequestHeaderAttributes() {
     const char* default_value;
   };
   static TopLevelAttr attrs[] = {
-    {HttpCheckData::HEADER_PATH, AttributeName::kRequestPath, true, ""},
-    {HttpCheckData::HEADER_HOST, AttributeName::kRequestHost, true, ""},
-    {HttpCheckData::HEADER_SCHEME, AttributeName::kRequestScheme, true, "http"},
-    {HttpCheckData::HEADER_USER_AGENT, AttributeName::kRequestUserAgent, false, ""},
-    {HttpCheckData::HEADER_METHOD, AttributeName::kRequestMethod, false, ""},
-    {HttpCheckData::HEADER_REFERER, AttributeName::kRequestReferer, false, ""},
+      {HttpCheckData::HEADER_PATH, AttributeName::kRequestPath, true, ""},
+      {HttpCheckData::HEADER_HOST, AttributeName::kRequestHost, true, ""},
+      {HttpCheckData::HEADER_SCHEME, AttributeName::kRequestScheme, true,
+       "http"},
+      {HttpCheckData::HEADER_USER_AGENT, AttributeName::kRequestUserAgent,
+       false, ""},
+      {HttpCheckData::HEADER_METHOD, AttributeName::kRequestMethod, false, ""},
+      {HttpCheckData::HEADER_REFERER, AttributeName::kRequestReferer, false,
+       ""},
   };
-  
+
   for (const auto& it : attrs) {
     std::string data;
     if (check_data_->FindRequestHeader(it.header_type, &data)) {
@@ -191,7 +195,8 @@ void HttpRequestContext::ExtractReportAttributes(
 CancelFunc HttpRequestContext::Check(TransportCheckFunc transport,
                                      DoneFunc on_done) {
   std::string forwarded_data;
-  bool has_forwarded_data = check_data_->ExtractIstioAttributes(&forwarded_data);
+  bool has_forwarded_data =
+      check_data_->ExtractIstioAttributes(&forwarded_data);
 
   if (per_route_config_->enable_mixer_check() ||
       per_route_config_->enable_mixer_report()) {
@@ -209,8 +214,8 @@ CancelFunc HttpRequestContext::Check(TransportCheckFunc transport,
     return nullptr;
   }
 
-  auto my_on_done =
-    [this, on_done](const ::google::protobuf::util::Status& status) {
+  auto my_on_done = [this,
+                     on_done](const ::google::protobuf::util::Status& status) {
     // save the check status code
     check_status_code_ = status.error_code();
     on_done(status);
@@ -228,7 +233,7 @@ void HttpRequestContext::Report(std::unique_ptr<HttpReportData> report_data) {
     return;
   }
   ExtractReportAttributes(std::move(report_data));
-  
+
   client_context()->SendReport(attributes_);
 }
 
