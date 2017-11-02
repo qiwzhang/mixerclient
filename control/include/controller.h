@@ -38,7 +38,7 @@ class Controller {
 
   struct FactoryData {
     // Mixer filter config
-    const ::istio::mixer::v1::config::client::MixerFilterConfig& mixer_config;
+    ::istio::mixer::v1::config::client::MixerFilterConfig mixer_config;
 
     // Some plaform functions for mixer client library.
     ::istio::mixer_client::TransportCheckFunc check_transport;

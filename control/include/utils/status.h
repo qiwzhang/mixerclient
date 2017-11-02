@@ -13,32 +13,18 @@
  * limitations under the License.
  */
 
-#ifndef MIXERCONTROL_TCP_REPORT_DATA_H
-#define MIXERCONTROL_TCP_REPORT_DATA_H
-
-#include <chrono>
-#include <string>
+#ifndef MIXERCONTROL_UTILS_STATUS_H
+#define MIXERCONTROL_UTILS_STATUS_H
 
 namespace istio {
 namespace mixer_control {
+namespace utils {
 
-// Interface class to extract data for Mixer report call.
-class TcpReportData {
- public:
-  virtual ~TcpReportData() {}
+// Convert Status::code to HTTP code
+int StatusHttpCode(int code);
 
-  // Get destination tcp connection ip and port.
-  virtual bool GetDestinationIpPort(std::string* ip, int* port) const = 0;
-
-  struct ReportInfo {
-    uint64_t send_bytes;
-    uint64_t received_bytes;
-    std::chrono::nanoseconds duration;
-  };
-  virtual void GetReportInfo(ReportInfo* info) const = 0;
-};
-
+}  // utils
 }  // namespace mixer_control
 }  // namespace istio
 
-#endif  // MIXERCONTROL_TCP_REPORT_DATA_H
+#endif  // MIXERCONTROL_UTILS_STATUS_H

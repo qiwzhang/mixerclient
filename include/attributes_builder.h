@@ -85,6 +85,10 @@ class AttributesBuilder {
     }
   }
 
+  // If key suffixed with ".ip", try to convert its value to ipv4 or ipv6.
+  // If success, add it as bytes, otherwise add it as string.
+  void AddIpOrString(const std::string& key, const std::string& str);
+  
  private:
   ::istio::mixer::v1::Attributes* attributes_;
 };

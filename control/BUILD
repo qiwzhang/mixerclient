@@ -31,6 +31,7 @@ cc_library(
         "src/tcp_request_context.h",
         "src/tcp_request_handler_impl.cc",
         "src/tcp_request_handler_impl.h",
+        "src/utils/status.cc",
     ],
     hdrs = [
         "include/controller.h",
@@ -40,6 +41,7 @@ cc_library(
         "include/tcp_check_data.h",
         "include/tcp_report_data.h",
         "include/tcp_request_handler.h",
+        "include/utils/status.h",
     ],
     visibility = ["//visibility:public"],
     deps = [

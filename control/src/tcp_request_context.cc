@@ -103,9 +103,6 @@ CancelFunc TcpRequestContext::Check(DoneFunc on_done) {
 }
 
 void TcpRequestContext::Report(std::unique_ptr<TcpReportData> report_data) {
-  if (attributes_.attributes_size() == 0) {
-    return;
-  }
   ExtractReportAttributes(std::move(report_data));
 
   client_context()->SendReport(attributes_);

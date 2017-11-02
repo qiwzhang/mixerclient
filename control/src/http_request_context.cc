@@ -16,9 +16,8 @@
 #include "http_request_context.h"
 
 #include "attribute_names.h"
+#include "control/include/utils/status.h"
 #include "include/attributes_builder.h"
-
-#include <arpa/inet.h>
 
 using ::google::protobuf::util::Status;
 using ::google::protobuf::util::error::Code;
@@ -33,47 +32,6 @@ using ::istio::mixer_client::DoneFunc;
 
 namespace istio {
 namespace mixer_control {
-namespace {
-
-// Pilot mesh attributes with the suffix will be treated as ipv4.
-// They will use BYTES attribute type.
-const std::string kIPSuffix = ".ip";
-
-// Mesh attributes from Pilot are all string type.
-// The attributes with ".ip" suffix will be treated
-// as ipv4 and use BYTES attribute type.
-void SetMeshAttribute(const std::string& name, const std::string& value,
-                      Attributes* attr) {
-  // Check with ".ip" suffix,
-  if (name.length() <= kIPSuffix.length() ||
-      name.compare(name.length() - kIPSuffix.length(), kIPSuffix.length(),
-                   kIPSuffix) != 0) {
-    AttributesBuilder(attr).AddString(name, value);
-    return;
-  }
-
-  in_addr ipv4_bytes;
-  if (inet_pton(AF_INET, value.c_str(), &ipv4_bytes) == 1) {
-    AttributesBuilder(attr).AddBytes(
-        name, std::string(reinterpret_cast<const char*>(&ipv4_bytes),
-                          sizeof(ipv4_bytes)));
-    return;
-  }
-
-  in6_addr ipv6_bytes;
-  if (inet_pton(AF_INET6, value.c_str(), &ipv6_bytes) == 1) {
-    AttributesBuilder(attr).AddBytes(
-        name, std::string(reinterpret_cast<const char*>(&ipv6_bytes),
-                          sizeof(ipv6_bytes)));
-    return;
-  }
-
-  // TODO: add error log.
-  // ENVOY_LOG(warn, "Could not convert to ip: {}: {}", name, value);
-  AttributesBuilder(attr).AddString(name, value);
-}
-
-}  //  namespace
 
 HttpRequestContext::HttpRequestContext(
     std::unique_ptr<HttpCheckData> check_data,
@@ -127,8 +85,9 @@ void HttpRequestContext::AddForwardedAttributes(
   // Legacy format from old proxy.
   Attributes_StringMap forwarded_attributes;
   if (forwarded_attributes.ParseFromString(forwarded_data)) {
+    AttributesBuilder builder(&attributes_);
     for (const auto& it : forwarded_attributes.entries()) {
-      SetMeshAttribute(it.first, it.second, &attributes_);
+      builder.AddIpOrString(it.first, it.second);
     }
   }
 }
@@ -186,7 +145,7 @@ void HttpRequestContext::ExtractReportAttributes(
   builder.AddInt64(AttributeName::kResponseSize, info.send_bytes);
   builder.AddDuration(AttributeName::kResponseDuration, info.duration);
   if (check_status_code_ != 0) {
-    builder.AddInt64(AttributeName::kResponseCode, check_status_code_);
+    builder.AddInt64(AttributeName::kResponseCode, utils::StatusHttpCode(check_status_code_));
   } else {
     builder.AddInt64(AttributeName::kResponseCode, info.response_code);
   }
@@ -224,12 +183,7 @@ CancelFunc HttpRequestContext::Check(TransportCheckFunc transport,
 }
 
 void HttpRequestContext::Report(std::unique_ptr<HttpReportData> report_data) {
-  // If attributes is empty, it means Mixer filter is not called.
-  // not call Report for this case.
-  // Report() is called at Log stage which can be called even mixer filter
-  // is not called yet.
-  if (!per_route_config_->enable_mixer_report() ||
-      attributes_.attributes_size() == 0) {
+  if (!per_route_config_->enable_mixer_report()) {
     return;
   }
   ExtractReportAttributes(std::move(report_data));
