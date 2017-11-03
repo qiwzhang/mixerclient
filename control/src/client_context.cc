@@ -84,6 +84,7 @@ CancelFunc ClientContext::SendCheck(const Attributes& attributes,
   }
   // TODO: add debug message
   // ENVOY_LOG(debug, "Send Check: {}", attributes.DebugString());
+  //  GOOGLE_LOG(INFO) << "Check attributes: " << attributes.DebugString();
   return mixer_client_->Check(attributes, transport, on_done);
 }
 

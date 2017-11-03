@@ -37,8 +37,12 @@ class Controller {
       std::unique_ptr<TcpCheckData> check_data) = 0;
 
   struct FactoryData {
+    FactoryData(
+        const ::istio::mixer::v1::config::client::MixerFilterConfig& config)
+        : mixer_config(config) {}
+
     // Mixer filter config
-    ::istio::mixer::v1::config::client::MixerFilterConfig mixer_config;
+    const ::istio::mixer::v1::config::client::MixerFilterConfig& mixer_config;
 
     // Some plaform functions for mixer client library.
     ::istio::mixer_client::TransportCheckFunc check_transport;

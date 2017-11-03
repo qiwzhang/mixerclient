@@ -145,7 +145,8 @@ void HttpRequestContext::ExtractReportAttributes(
   builder.AddInt64(AttributeName::kResponseSize, info.send_bytes);
   builder.AddDuration(AttributeName::kResponseDuration, info.duration);
   if (check_status_code_ != 0) {
-    builder.AddInt64(AttributeName::kResponseCode, utils::StatusHttpCode(check_status_code_));
+    builder.AddInt64(AttributeName::kResponseCode,
+                     utils::StatusHttpCode(check_status_code_));
   } else {
     builder.AddInt64(AttributeName::kResponseCode, info.response_code);
   }
