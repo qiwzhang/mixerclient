@@ -39,9 +39,10 @@ HttpRequestContext::HttpRequestContext(
     std::unique_ptr<MixerControlConfig> per_route_config)
     : check_data_(std::move(check_data)),
       client_context_(client_context),
-      per_route_config_(std::move(per_route_config)) {}
+      per_route_config_(std::move(per_route_config)),
+      check_status_code_(0) {}
 
-void HttpRequestContext::FillRequestHeaderAttributes() {
+void HttpRequestContext::ExtractRequestHeaderAttributes() {
   AttributesBuilder builder(&attributes_);
   std::map<std::string, std::string> headers = check_data_->GetRequestHeaders();
   builder.AddStringMap(AttributeName::kRequestHeaders, headers);
@@ -74,7 +75,7 @@ void HttpRequestContext::FillRequestHeaderAttributes() {
   }
 }
 
-void HttpRequestContext::AddForwardedAttributes(
+void HttpRequestContext::ExtractForwardedAttributes(
     const std::string& forwarded_data) {
   Attributes v2_format;
   if (v2_format.ParseFromString(forwarded_data)) {
@@ -94,14 +95,14 @@ void HttpRequestContext::AddForwardedAttributes(
 
 void HttpRequestContext::ExtractCheckAttributes() {
   // Quota should be part of service_config().mixer_attributes.
-  if (client_context()->config().has_mixer_attributes()) {
-    attributes_.MergeFrom(client_context()->config().mixer_attributes());
+  if (client_context_->config().has_mixer_attributes()) {
+    attributes_.MergeFrom(client_context_->config().mixer_attributes());
   }
   if (per_route_config_->has_mixer_attributes()) {
     attributes_.MergeFrom(per_route_config_->mixer_attributes());
   }
 
-  FillRequestHeaderAttributes();
+  ExtractRequestHeaderAttributes();
 
   AttributesBuilder builder(&attributes_);
 
@@ -122,9 +123,9 @@ void HttpRequestContext::ExtractCheckAttributes() {
 }
 
 void HttpRequestContext::ForwardAttributes() {
-  if (client_context()->config().has_forward_attributes()) {
+  if (client_context_->config().has_forward_attributes()) {
     std::string str;
-    client_context()->config().forward_attributes().SerializeToString(&str);
+    client_context_->config().forward_attributes().SerializeToString(&str);
     check_data_->AddIstioAttributes(str);
   }
 }
@@ -161,7 +162,7 @@ CancelFunc HttpRequestContext::Check(TransportCheckFunc transport,
   if (per_route_config_->enable_mixer_check() ||
       per_route_config_->enable_mixer_report()) {
     if (has_forwarded_data) {
-      AddForwardedAttributes(forwarded_data);
+      ExtractForwardedAttributes(forwarded_data);
     }
 
     ExtractCheckAttributes();
@@ -180,7 +181,7 @@ CancelFunc HttpRequestContext::Check(TransportCheckFunc transport,
     check_status_code_ = status.error_code();
     on_done(status);
   };
-  return client_context()->SendCheck(attributes_, transport, my_on_done);
+  return client_context_->SendCheck(attributes_, transport, my_on_done);
 }
 
 void HttpRequestContext::Report(std::unique_ptr<HttpReportData> report_data) {
@@ -189,7 +190,7 @@ void HttpRequestContext::Report(std::unique_ptr<HttpReportData> report_data) {
   }
   ExtractReportAttributes(std::move(report_data));
 
-  client_context()->SendReport(attributes_);
+  client_context_->SendReport(attributes_);
 }
 
 }  // namespace mixer_control

@@ -23,7 +23,7 @@
 namespace istio {
 namespace mixer_control {
 
-// Per request context
+// The context for each HTTP request.
 class HttpRequestContext {
  public:
   HttpRequestContext(
@@ -32,28 +32,39 @@ class HttpRequestContext {
       std::unique_ptr<::istio::mixer::v1::config::client::MixerControlConfig>
           per_route_config);
 
-  ClientContext* client_context() { return client_context_.get(); }
-
+  // Make a Check call.
   ::istio::mixer_client::CancelFunc Check(
       ::istio::mixer_client::TransportCheckFunc transport,
       ::istio::mixer_client::DoneFunc on_done);
 
+  // Make a Report call.
   void Report(std::unique_ptr<HttpReportData> report_data);
 
  private:
+  // Extract attributes for Check call.
   void ExtractCheckAttributes();
+  // Extract attributes for Report call.
   void ExtractReportAttributes(std::unique_ptr<HttpReportData> report_data);
+  // Forward attributes to upstream proxy.
   void ForwardAttributes();
-  void AddForwardedAttributes(const std::string& forwarded_data);
-  void FillRequestHeaderAttributes();
+  // Extract forwarded attributes from client proxy.
+  void ExtractForwardedAttributes(const std::string& forwarded_data);
+  // Extract HTTP header attributes
+  void ExtractRequestHeaderAttributes();
 
+  // The check data object.
   std::unique_ptr<HttpCheckData> check_data_;
+  // The client context object.
   std::shared_ptr<ClientContext> client_context_;
+  // The per-route config.
   std::unique_ptr<::istio::mixer::v1::config::client::MixerControlConfig>
       per_route_config_;
 
+  // The attributes used for both Check and Report.
+  // All Check attributes will be send to Report too.
   ::istio::mixer::v1::Attributes attributes_;
-  int check_status_code_ = 0;
+  // The check call status
+  int check_status_code_;
 };
 
 }  // namespace mixer_control

@@ -21,24 +21,31 @@
 namespace istio {
 namespace mixer_control {
 
+// The global context object to hold:
+// * the mixer client config
+// * the mixer client object to call Check/Report with cache.
 class ClientContext {
  public:
   ClientContext(const Controller::FactoryData& data);
 
+  // Use mixer client object to make a Check call.
   ::istio::mixer_client::CancelFunc SendCheck(
       const ::istio::mixer::v1::Attributes& attributes,
       ::istio::mixer_client::TransportCheckFunc transport,
       ::istio::mixer_client::DoneFunc on_done);
 
+  // Use mixer client object to make a Report call.
   void SendReport(const ::istio::mixer::v1::Attributes& attributes);
 
+  // Retrieve mixer client config.
   const ::istio::mixer::v1::config::client::MixerFilterConfig& config() const {
     return config_;
   }
 
  private:
-  // The mixer client
+  // The mixer client object with check cache and report batch features.
   std::unique_ptr<::istio::mixer_client::MixerClient> mixer_client_;
+  // The mixer client config.
   const ::istio::mixer::v1::config::client::MixerFilterConfig& config_;
 };
 

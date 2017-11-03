@@ -24,19 +24,23 @@
 namespace istio {
 namespace mixer_control {
 
+// The class to implement Controller interface.
 class ControllerImpl : public Controller {
  public:
   ControllerImpl(const Controller::FactoryData& data);
 
+  // Creates a HTTP request handler
   std::unique_ptr<HttpRequestHandler> CreateHttpRequestHandler(
       std::unique_ptr<HttpCheckData> check_data,
       std::unique_ptr<::istio::mixer::v1::config::client::MixerControlConfig>
           per_route_config) override;
 
+  // Creates a TCP request handler
   std::unique_ptr<TcpRequestHandler> CreateTcpRequestHandler(
       std::unique_ptr<TcpCheckData> check_data) override;
 
  private:
+  // The client context object to hold client config and client cache.
   std::shared_ptr<ClientContext> client_context_;
 };
 

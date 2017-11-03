@@ -22,14 +22,15 @@
 namespace istio {
 namespace mixer_control {
 
-// Interface class to extract data for Mixer report call.
+// The interface to extract data for Mixer report.
 class HttpReportData {
  public:
   virtual ~HttpReportData() {}
 
-  // Get reqeust HTTP headers
+  // Get response HTTP headers.
   virtual std::map<std::string, std::string> GetResponseHeaders() const = 0;
 
+  // Get additional report info.
   struct ReportInfo {
     uint64_t send_bytes;
     uint64_t received_bytes;

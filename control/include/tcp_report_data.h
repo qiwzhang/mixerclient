@@ -22,14 +22,15 @@
 namespace istio {
 namespace mixer_control {
 
-// Interface class to extract data for Mixer report call.
+// The interface to extract data for Mixer report call.
 class TcpReportData {
  public:
   virtual ~TcpReportData() {}
 
-  // Get destination tcp connection ip and port.
+  // Get upstream tcp connection ip and port.
   virtual bool GetDestinationIpPort(std::string* ip, int* port) const = 0;
 
+  // Get report data.
   struct ReportInfo {
     uint64_t send_bytes;
     uint64_t received_bytes;

@@ -24,18 +24,30 @@
 namespace istio {
 namespace mixer_control {
 
+// An interface to support Mixer control.
+// It takes MixerFitlerConfig and performs tasks to enforce
+// mixer control over HTTP and TCP requests.
 class Controller {
  public:
   virtual ~Controller() {}
 
+  // Creates a HTTP request handler.
+  // The handler supports making Check and Report calls to Mixer.
+  // "per_route_config" is for supporting older version of Pilot which
+  // set per-route config in route opaque data.
   virtual std::unique_ptr<HttpRequestHandler> CreateHttpRequestHandler(
       std::unique_ptr<HttpCheckData> check_data,
       std::unique_ptr<::istio::mixer::v1::config::client::MixerControlConfig>
           per_route_config) = 0;
 
+  // Creates a TCP request handler.
+  // The handler supports making Check and Report calls to Mixer.
   virtual std::unique_ptr<TcpRequestHandler> CreateTcpRequestHandler(
       std::unique_ptr<TcpCheckData> check_data) = 0;
 
+  // The initial data required by the Controller. It needs:
+  // * mixer_config: the mixer client config.
+  // * some functions provided by the platform (Envoy)
   struct FactoryData {
     FactoryData(
         const ::istio::mixer::v1::config::client::MixerFilterConfig& config)
@@ -51,6 +63,7 @@ class Controller {
     ::istio::mixer_client::UUIDGenerateFunc uuid_generate_func;
   };
 
+  // The factory function to create a new instance of the controller.
   static std::unique_ptr<Controller> Create(const FactoryData& factory_data);
 };
 

@@ -19,11 +19,6 @@
 #include "include/attributes_builder.h"
 
 using ::google::protobuf::util::Status;
-using ::google::protobuf::util::error::Code;
-using ::istio::mixer::v1::Attributes;
-using ::istio::mixer::v1::Attributes_StringMap;
-using ::istio::mixer::v1::config::client::MixerFilterConfig;
-using ::istio::mixer::v1::config::client::MixerControlConfig;
 using ::istio::mixer_client::AttributesBuilder;
 using ::istio::mixer_client::CancelFunc;
 using ::istio::mixer_client::TransportCheckFunc;
@@ -38,8 +33,8 @@ TcpRequestContext::TcpRequestContext(
     : check_data_(std::move(check_data)), client_context_(client_context) {}
 
 void TcpRequestContext::ExtractCheckAttributes() {
-  if (client_context()->config().has_mixer_attributes()) {
-    attributes_.MergeFrom(client_context()->config().mixer_attributes());
+  if (client_context_->config().has_mixer_attributes()) {
+    attributes_.MergeFrom(client_context_->config().mixer_attributes());
   }
 
   AttributesBuilder builder(&attributes_);
@@ -89,7 +84,7 @@ void TcpRequestContext::ExtractReportAttributes(
 CancelFunc TcpRequestContext::Check(DoneFunc on_done) {
   ExtractCheckAttributes();
 
-  if (client_context()->config().disable_tcp_check_calls()) {
+  if (client_context_->config().disable_tcp_check_calls()) {
     on_done(Status::OK);
     return nullptr;
   }
@@ -99,13 +94,13 @@ CancelFunc TcpRequestContext::Check(DoneFunc on_done) {
     check_status_code_ = status.error_code();
     on_done(status);
   };
-  return client_context()->SendCheck(attributes_, nullptr, my_on_done);
+  return client_context_->SendCheck(attributes_, nullptr, my_on_done);
 }
 
 void TcpRequestContext::Report(std::unique_ptr<TcpReportData> report_data) {
   ExtractReportAttributes(std::move(report_data));
 
-  client_context()->SendReport(attributes_);
+  client_context_->SendReport(attributes_);
 }
 
 }  // namespace mixer_control

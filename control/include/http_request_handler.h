@@ -23,16 +23,25 @@
 namespace istio {
 namespace mixer_control {
 
-// Interface class to handle a HTTP request.
+// The interface to handle a HTTP request.
 class HttpRequestHandler {
  public:
   virtual ~HttpRequestHandler() {}
 
+  // Perform a Check call. It will:
+  // * extract forwarded attributes from client proxy
+  // * extract attributes from the request
+  // * extract attributes from the config.
+  // * if necessary, forward some attributes to downstream
+  // * make a Check call.
   virtual ::istio::mixer_client::CancelFunc Check(
       ::istio::mixer_client::TransportCheckFunc transport,
       ::istio::mixer_client::DoneFunc on_done) = 0;
 
-  // Make remote report call.
+  // Make a Report call. It will:
+  // * check service config to see if Report is required
+  // * extract more report attributes
+  // * make a Report call.
   virtual void Report(std::unique_ptr<HttpReportData> report_data) = 0;
 };
 

@@ -23,17 +23,21 @@
 namespace istio {
 namespace mixer_control {
 
+// The class to implement TcpRequestHandler interface.
 class TcpRequestHandlerImpl : public TcpRequestHandler {
  public:
   TcpRequestHandlerImpl(std::unique_ptr<TcpCheckData> check_data,
                         std::shared_ptr<ClientContext> client_context);
 
+  // Make a Check call.
   ::istio::mixer_client::CancelFunc Check(
       ::istio::mixer_client::DoneFunc on_done) override;
 
+  // Make a Report call.
   void Report(std::unique_ptr<TcpReportData> report_data) override;
 
  private:
+  // The request context object.
   std::unique_ptr<TcpRequestContext> request_context_;
 };
 

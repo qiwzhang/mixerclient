@@ -83,8 +83,7 @@ CancelFunc ClientContext::SendCheck(const Attributes& attributes,
     return nullptr;
   }
   // TODO: add debug message
-  // ENVOY_LOG(debug, "Send Check: {}", attributes.DebugString());
-  //  GOOGLE_LOG(INFO) << "Check attributes: " << attributes.DebugString();
+  // GOOGLE_LOG(INFO) << "Check attributes: " << attributes.DebugString();
   return mixer_client_->Check(attributes, transport, on_done);
 }
 
@@ -93,7 +92,7 @@ void ClientContext::SendReport(const Attributes& attributes) {
     return;
   }
   // TODO: add debug message
-  // ENVOY_LOG(debug, "Send Report: {}", attributes.DebugString());
+  // GOOGLE_LOG(INFO) << "Report attributes: " << attributes.DebugString();
   mixer_client_->Report(attributes);
 }
 

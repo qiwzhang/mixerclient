@@ -23,27 +23,33 @@
 namespace istio {
 namespace mixer_control {
 
-// Per request context
+// The context to hold TCP request data.
 class TcpRequestContext {
  public:
   TcpRequestContext(std::unique_ptr<TcpCheckData> check_data,
                     std::shared_ptr<ClientContext> client_context);
 
-  ClientContext* client_context() { return client_context_.get(); }
-
+  // Make a Check call.
   ::istio::mixer_client::CancelFunc Check(
       ::istio::mixer_client::DoneFunc on_done);
 
+  // Make a Report call.
   void Report(std::unique_ptr<TcpReportData> report_data);
 
  private:
+  // Extract attributes for Check.
   void ExtractCheckAttributes();
+  // Extract attributes for Report.
   void ExtractReportAttributes(std::unique_ptr<TcpReportData> report_data);
 
+  // The check data object.
   std::unique_ptr<TcpCheckData> check_data_;
+  // The client context object.
   std::shared_ptr<ClientContext> client_context_;
 
+  // The attributes for both Check and Report.
   ::istio::mixer::v1::Attributes attributes_;
+  // The check status code.
   int check_status_code_ = 0;
 };
 
