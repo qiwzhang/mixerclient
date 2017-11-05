@@ -20,6 +20,7 @@
 
 #include "client_context.h"
 #include "control/include/controller.h"
+#include "service_context.h"
 
 namespace istio {
 namespace mixer_control {
@@ -40,8 +41,21 @@ class ControllerImpl : public Controller {
       std::unique_ptr<TcpCheckData> check_data) override;
 
  private:
+  // Create service config context for HTTP.
+  std::shared_ptr<ServiceContext> GetHttpServiceContext(
+      const HttpCheckData& check_data,
+      std::unique_ptr<::istio::mixer::v1::config::client::MixerControlConfig>
+          per_route_config);
+
+  // Create service config context for TCP
+  std::shared_ptr<ServiceContext> GetTcpServiceContext(
+      const TcpCheckData& check_data);
+
   // The client context object to hold client config and client cache.
   std::shared_ptr<ClientContext> client_context_;
+
+  // tcp service context
+  std::shared_ptr<ServiceContext> tcp_service_context_;
 };
 
 }  // namespace mixer_control

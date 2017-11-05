@@ -18,7 +18,8 @@
 
 #include "client_context.h"
 #include "control/include/http_request_handler.h"
-#include "http_request_context.h"
+#include "request_context.h"
+#include "service_context.h"
 
 namespace istio {
 namespace mixer_control {
@@ -26,11 +27,8 @@ namespace mixer_control {
 // The class to implement HTTPRequestHandler interface.
 class HttpRequestHandlerImpl : public HttpRequestHandler {
  public:
-  HttpRequestHandlerImpl(
-      std::unique_ptr<HttpCheckData> check_data,
-      std::shared_ptr<ClientContext> client_context,
-      std::unique_ptr<::istio::mixer::v1::config::client::MixerControlConfig>
-          per_route_config);
+  HttpRequestHandlerImpl(std::shared_ptr<ServiceContext> service_context,
+                         std::unique_ptr<HttpCheckData> check_data);
 
   // Makes a Check call.
   ::istio::mixer_client::CancelFunc Check(
@@ -42,7 +40,13 @@ class HttpRequestHandlerImpl : public HttpRequestHandler {
 
  private:
   // The request context object.
-  std::unique_ptr<HttpRequestContext> request_context_;
+  RequestContext request_context_;
+
+  // The service context.
+  std::shared_ptr<ServiceContext> service_context_;
+
+  // The check data object.
+  std::unique_ptr<HttpCheckData> check_data_;
 };
 
 }  // namespace mixer_control

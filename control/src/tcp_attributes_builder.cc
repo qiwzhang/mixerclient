@@ -13,41 +13,29 @@
  * limitations under the License.
  */
 
-#include "tcp_request_context.h"
+#include "tcp_attributes_builder.h"
 
 #include "attribute_names.h"
 #include "include/attributes_builder.h"
 
-using ::google::protobuf::util::Status;
 using ::istio::mixer_client::AttributesBuilder;
-using ::istio::mixer_client::CancelFunc;
-using ::istio::mixer_client::TransportCheckFunc;
-using ::istio::mixer_client::DoneFunc;
 
 namespace istio {
 namespace mixer_control {
 
-TcpRequestContext::TcpRequestContext(
-    std::unique_ptr<TcpCheckData> check_data,
-    std::shared_ptr<ClientContext> client_context)
-    : check_data_(std::move(check_data)), client_context_(client_context) {}
-
-void TcpRequestContext::ExtractCheckAttributes() {
-  if (client_context_->config().has_mixer_attributes()) {
-    attributes_.MergeFrom(client_context_->config().mixer_attributes());
-  }
-
-  AttributesBuilder builder(&attributes_);
+void TcpAttributesBuilder::ExtractCheckAttributes(
+    const TcpCheckData& check_data) {
+  AttributesBuilder builder(&request_->attributes);
 
   std::string source_ip;
   int source_port;
-  if (check_data_->GetSourceIpPort(&source_ip, &source_port)) {
+  if (check_data.GetSourceIpPort(&source_ip, &source_port)) {
     builder.AddBytes(AttributeName::kSourceIp, source_ip);
     builder.AddInt64(AttributeName::kSourcePort, source_port);
   }
 
   std::string source_user;
-  if (check_data_->GetSourceUser(&source_user)) {
+  if (check_data.GetSourceUser(&source_user)) {
     builder.AddString(AttributeName::kSourceUser, source_user);
   }
   builder.AddTimestamp(AttributeName::kContextTime,
@@ -55,12 +43,12 @@ void TcpRequestContext::ExtractCheckAttributes() {
   builder.AddString(AttributeName::kContextProtocol, "tcp");
 }
 
-void TcpRequestContext::ExtractReportAttributes(
-    std::unique_ptr<TcpReportData> report_data) {
-  AttributesBuilder builder(&attributes_);
+void TcpAttributesBuilder::ExtractReportAttributes(
+    const TcpReportData& report_data) {
+  AttributesBuilder builder(&request_->attributes);
 
   TcpReportData::ReportInfo info;
-  report_data->GetReportInfo(&info);
+  report_data.GetReportInfo(&info);
   builder.AddInt64(AttributeName::kConnectionReceviedBytes,
                    info.received_bytes);
   builder.AddInt64(AttributeName::kConnectionReceviedTotalBytes,
@@ -68,39 +56,18 @@ void TcpRequestContext::ExtractReportAttributes(
   builder.AddInt64(AttributeName::kConnectionSendBytes, info.send_bytes);
   builder.AddInt64(AttributeName::kConnectionSendTotalBytes, info.send_bytes);
   builder.AddDuration(AttributeName::kConnectionDuration, info.duration);
-  builder.AddInt64(AttributeName::kCheckStatusCode, check_status_code_);
+  builder.AddInt64(AttributeName::kCheckStatusCode,
+                   request_->check_status.error_code());
 
   std::string dest_ip;
   int dest_port;
-  if (report_data->GetDestinationIpPort(&dest_ip, &dest_port)) {
+  if (report_data.GetDestinationIpPort(&dest_ip, &dest_port)) {
     builder.AddBytes(AttributeName::kDestinationIp, dest_ip);
     builder.AddInt64(AttributeName::kDestinationPort, dest_port);
   }
 
   builder.AddTimestamp(AttributeName::kContextTime,
                        std::chrono::system_clock::now());
-}
-
-CancelFunc TcpRequestContext::Check(DoneFunc on_done) {
-  ExtractCheckAttributes();
-
-  if (client_context_->config().disable_tcp_check_calls()) {
-    on_done(Status::OK);
-    return nullptr;
-  }
-
-  auto my_on_done = [this, on_done](const Status& status) {
-    // save the check status code
-    check_status_code_ = status.error_code();
-    on_done(status);
-  };
-  return client_context_->SendCheck(attributes_, nullptr, my_on_done);
-}
-
-void TcpRequestContext::Report(std::unique_ptr<TcpReportData> report_data) {
-  ExtractReportAttributes(std::move(report_data));
-
-  client_context_->SendReport(attributes_);
 }
 
 }  // namespace mixer_control

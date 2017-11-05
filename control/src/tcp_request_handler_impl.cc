@@ -14,7 +14,9 @@
  */
 
 #include "tcp_request_handler_impl.h"
+#include "tcp_attributes_builder.h"
 
+using ::google::protobuf::util::Status;
 using ::istio::mixer_client::CancelFunc;
 using ::istio::mixer_client::DoneFunc;
 
@@ -22,19 +24,37 @@ namespace istio {
 namespace mixer_control {
 
 TcpRequestHandlerImpl::TcpRequestHandlerImpl(
-    std::unique_ptr<TcpCheckData> check_data,
-    std::shared_ptr<ClientContext> client_context) {
-  request_context_.reset(
-      new TcpRequestContext(std::move(check_data), client_context));
-}
+    std::shared_ptr<ServiceContext> service_context,
+    std::unique_ptr<TcpCheckData> check_data)
+    : service_context_(service_context), check_data_(std::move(check_data)) {}
 
 CancelFunc TcpRequestHandlerImpl::Check(DoneFunc on_done) {
-  return request_context_->Check(on_done);
+  if (service_context_->enable_mixer_check() ||
+      service_context_->enable_mixer_report()) {
+    service_context_->AddStaticAttributes(&request_context_);
+
+    TcpAttributesBuilder builder(&request_context_);
+    builder.ExtractCheckAttributes(*check_data_);
+  }
+
+  if (!service_context_->enable_mixer_check()) {
+    on_done(Status::OK);
+    return nullptr;
+  }
+
+  return service_context_->client_context()->SendCheck(nullptr, on_done,
+                                                       &request_context_);
 }
 
 // Make remote report call.
-void TcpRequestHandlerImpl::Report(std::unique_ptr<TcpReportData> response) {
-  request_context_->Report(std::move(response));
+void TcpRequestHandlerImpl::Report(std::unique_ptr<TcpReportData> report_data) {
+  if (!service_context_->enable_mixer_report()) {
+    return;
+  }
+  TcpAttributesBuilder builder(&request_context_);
+  builder.ExtractReportAttributes(*report_data);
+
+  service_context_->client_context()->SendReport(request_context_);
 }
 
 }  // namespace mixer_control

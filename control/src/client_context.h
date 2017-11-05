@@ -17,6 +17,7 @@
 #define MIXERCONTROL_CLIENT_CONTEXT_H
 
 #include "control/include/controller.h"
+#include "request_context.h"
 
 namespace istio {
 namespace mixer_control {
@@ -30,12 +31,11 @@ class ClientContext {
 
   // Use mixer client object to make a Check call.
   ::istio::mixer_client::CancelFunc SendCheck(
-      const ::istio::mixer::v1::Attributes& attributes,
       ::istio::mixer_client::TransportCheckFunc transport,
-      ::istio::mixer_client::DoneFunc on_done);
+      ::istio::mixer_client::DoneFunc on_done, RequestContext* request);
 
   // Use mixer client object to make a Report call.
-  void SendReport(const ::istio::mixer::v1::Attributes& attributes);
+  void SendReport(const RequestContext& request);
 
   // Retrieve mixer client config.
   const ::istio::mixer::v1::config::client::MixerFilterConfig& config() const {

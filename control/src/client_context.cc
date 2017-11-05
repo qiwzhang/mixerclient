@@ -75,25 +75,36 @@ ClientContext::ClientContext(const Controller::FactoryData& data)
   mixer_client_ = ::istio::mixer_client::CreateMixerClient(options);
 }
 
-CancelFunc ClientContext::SendCheck(const Attributes& attributes,
-                                    TransportCheckFunc transport,
-                                    DoneFunc on_done) {
+CancelFunc ClientContext::SendCheck(TransportCheckFunc transport,
+                                    DoneFunc on_done, RequestContext* request) {
   if (!mixer_client_) {
-    on_done(Status(Code::INVALID_ARGUMENT, "Missing mixer_server cluster"));
+    request->check_status =
+        Status(Code::INVALID_ARGUMENT, "Missing mixer_server cluster");
+    on_done(request->check_status);
     return nullptr;
   }
+
+  // Intercept the callback to save check status in request_context
+  auto local_on_done = [request, on_done](const Status& status) {
+    // save the check status code
+    request->check_status = status;
+    on_done(status);
+  };
+
   // TODO: add debug message
-  // GOOGLE_LOG(INFO) << "Check attributes: " << attributes.DebugString();
-  return mixer_client_->Check(attributes, transport, on_done);
+  // GOOGLE_LOG(INFO) << "Check attributes: " <<
+  // request->attributes.DebugString();
+  return mixer_client_->Check(request->attributes, transport, local_on_done);
 }
 
-void ClientContext::SendReport(const Attributes& attributes) {
+void ClientContext::SendReport(const RequestContext& request) {
   if (!mixer_client_) {
     return;
   }
   // TODO: add debug message
-  // GOOGLE_LOG(INFO) << "Report attributes: " << attributes.DebugString();
-  mixer_client_->Report(attributes);
+  // GOOGLE_LOG(INFO) << "Report attributes: " <<
+  // request.attributes.DebugString();
+  mixer_client_->Report(request.attributes);
 }
 
 }  // namespace mixer_control

@@ -18,7 +18,8 @@
 
 #include "client_context.h"
 #include "control/include/tcp_request_handler.h"
-#include "tcp_request_context.h"
+#include "request_context.h"
+#include "service_context.h"
 
 namespace istio {
 namespace mixer_control {
@@ -26,8 +27,8 @@ namespace mixer_control {
 // The class to implement TcpRequestHandler interface.
 class TcpRequestHandlerImpl : public TcpRequestHandler {
  public:
-  TcpRequestHandlerImpl(std::unique_ptr<TcpCheckData> check_data,
-                        std::shared_ptr<ClientContext> client_context);
+  TcpRequestHandlerImpl(std::shared_ptr<ServiceContext> service_context,
+                        std::unique_ptr<TcpCheckData> check_data);
 
   // Make a Check call.
   ::istio::mixer_client::CancelFunc Check(
@@ -38,7 +39,13 @@ class TcpRequestHandlerImpl : public TcpRequestHandler {
 
  private:
   // The request context object.
-  std::unique_ptr<TcpRequestContext> request_context_;
+  RequestContext request_context_;
+
+  // The service context object.
+  std::shared_ptr<ServiceContext> service_context_;
+
+  // The check data object.
+  std::unique_ptr<TcpCheckData> check_data_;
 };
 
 }  // namespace mixer_control

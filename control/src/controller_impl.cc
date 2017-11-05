@@ -30,13 +30,36 @@ std::unique_ptr<HttpRequestHandler> ControllerImpl::CreateHttpRequestHandler(
     std::unique_ptr<HttpCheckData> check_data,
     std::unique_ptr<MixerControlConfig> per_route_config) {
   return std::unique_ptr<HttpRequestHandler>(new HttpRequestHandlerImpl(
-      std::move(check_data), client_context_, std::move(per_route_config)));
+      GetHttpServiceContext(*check_data, std::move(per_route_config)),
+      std::move(check_data)));
 }
 
 std::unique_ptr<TcpRequestHandler> ControllerImpl::CreateTcpRequestHandler(
     std::unique_ptr<TcpCheckData> check_data) {
-  return std::unique_ptr<TcpRequestHandler>(
-      new TcpRequestHandlerImpl(std::move(check_data), client_context_));
+  return std::unique_ptr<TcpRequestHandler>(new TcpRequestHandlerImpl(
+      GetTcpServiceContext(*check_data), std::move(check_data)));
+}
+
+std::shared_ptr<ServiceContext> ControllerImpl::GetHttpServiceContext(
+    const HttpCheckData&,
+    std::unique_ptr<MixerControlConfig> per_route_config) {
+  // TODO: use check data to find config from control_configs
+  // TODO: cache the service config per destination.service.
+  return std::make_shared<ServiceContext>(client_context_, *per_route_config);
+}
+
+std::shared_ptr<ServiceContext> ControllerImpl::GetTcpServiceContext(
+    const TcpCheckData&) {
+  if (!tcp_service_context_) {
+    MixerControlConfig config;
+    // Report is always on
+    config.set_enable_mixer_report(true);
+    config.set_enable_mixer_check(
+        !client_context_->config().disable_tcp_check_calls());
+    tcp_service_context_ =
+        std::make_shared<ServiceContext>(client_context_, config);
+  }
+  return tcp_service_context_;
 }
 
 std::unique_ptr<Controller> Controller::Create(
