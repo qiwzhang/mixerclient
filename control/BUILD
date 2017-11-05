@@ -51,3 +51,18 @@ cc_library(
         "@mixerapi_git//:mixer_client_config_cc_proto",
     ],
 )
+
+cc_test(
+    name = "tcp_attributes_builder_test",
+    size = "small",
+    srcs = [
+        "src/mock_tcp_check_data.h",
+        "src/mock_tcp_report_data.h",
+	"src/tcp_attributes_builder_test.cc",
+    ],
+    linkstatic = 1,
+    deps = [
+        ":mixer_control_lib",
+        "//external:googletest_main",
+    ],
+)
