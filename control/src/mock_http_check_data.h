@@ -25,8 +25,14 @@ namespace mixer_control {
 // The mock object for HttpCheckData interface.
 class MockHttpCheckData : public HttpCheckData {
  public:
+  MOCK_METHOD1(ExtractIstioAttributes, bool(std::string* data));
+  MOCK_METHOD1(AddIstioAttributes, void(const std::string& data));
+
   MOCK_CONST_METHOD2(GetSourceIpPort, bool(std::string* ip, int* port));
   MOCK_CONST_METHOD1(GetSourceUser, bool(std::string* user));
+  MOCK_CONST_METHOD0(GetRequestHeaders,  std::map<std::string, std::string>());
+  MOCK_CONST_METHOD2(FindRequestHeader, bool(HeaderType header_type,
+					     std::string* value));
 };
 
 }  // namespace mixer_control

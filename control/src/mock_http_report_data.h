@@ -25,7 +25,7 @@ namespace mixer_control {
 // The mock object for HttpReportData interface.
 class MockHttpReportData : public HttpReportData {
  public:
-  MOCK_CONST_METHOD2(GetDestinationIpPort, bool(std::string* ip, int* port));
+  MOCK_CONST_METHOD0(GetResponseHeaders, std::map<std::string, std::string>());
   MOCK_CONST_METHOD1(GetReportInfo, void(ReportInfo* info));
 };
 

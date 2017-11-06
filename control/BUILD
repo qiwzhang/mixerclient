@@ -53,6 +53,21 @@ cc_library(
 )
 
 cc_test(
+    name = "http_attributes_builder_test",
+    size = "small",
+    srcs = [
+        "src/mock_http_check_data.h",
+        "src/mock_http_report_data.h",
+	"src/http_attributes_builder_test.cc",
+    ],
+    linkstatic = 1,
+    deps = [
+        ":mixer_control_lib",
+        "//external:googletest_main",
+    ],
+)
+
+cc_test(
     name = "tcp_attributes_builder_test",
     size = "small",
     srcs = [
