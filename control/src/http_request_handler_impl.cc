@@ -25,25 +25,25 @@ namespace istio {
 namespace mixer_control {
 
 HttpRequestHandlerImpl::HttpRequestHandlerImpl(
-    std::shared_ptr<ServiceContext> service_context,
-    std::unique_ptr<HttpCheckData> check_data)
-    : service_context_(service_context), check_data_(std::move(check_data)) {}
+    std::shared_ptr<ServiceContext> service_context)
+    : service_context_(service_context) {}
 
 CancelFunc HttpRequestHandlerImpl::Check(TransportCheckFunc transport,
-                                         DoneFunc on_done) {
+                                         DoneFunc on_done,
+                                         HttpCheckData* check_data) {
   if (service_context_->enable_mixer_check() ||
       service_context_->enable_mixer_report()) {
     service_context_->AddStaticAttributes(&request_context_);
 
     HttpAttributesBuilder builder(&request_context_);
-    builder.ExtractForwardedAttributes(check_data_.get());
-    builder.ExtractCheckAttributes(*check_data_);
+    builder.ExtractForwardedAttributes(check_data);
+    builder.ExtractCheckAttributes(check_data);
   }
 
   if (service_context_->client_context()->config().has_forward_attributes()) {
     HttpAttributesBuilder::ForwardAttributes(
         service_context_->client_context()->config().forward_attributes(),
-        check_data_.get());
+        check_data);
   }
 
   if (!service_context_->enable_mixer_check()) {
@@ -56,13 +56,12 @@ CancelFunc HttpRequestHandlerImpl::Check(TransportCheckFunc transport,
 }
 
 // Make remote report call.
-void HttpRequestHandlerImpl::Report(
-    std::unique_ptr<HttpReportData> report_data) {
+void HttpRequestHandlerImpl::Report(HttpReportData* report_data) {
   if (!service_context_->enable_mixer_report()) {
     return;
   }
   HttpAttributesBuilder builder(&request_context_);
-  builder.ExtractReportAttributes(*report_data);
+  builder.ExtractReportAttributes(report_data);
 
   service_context_->client_context()->SendReport(request_context_);
 }

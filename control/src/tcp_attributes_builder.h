@@ -29,9 +29,9 @@ class TcpAttributesBuilder {
   TcpAttributesBuilder(RequestContext* request) : request_(request) {}
 
   // Extract attributes for Check.
-  void ExtractCheckAttributes(const TcpCheckData& check_data);
+  void ExtractCheckAttributes(TcpCheckData* check_data);
   // Extract attributes for Report.
-  void ExtractReportAttributes(const TcpReportData& report_data);
+  void ExtractReportAttributes(TcpReportData* report_data);
 
  private:
   // The request context object.

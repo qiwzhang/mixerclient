@@ -27,7 +27,7 @@ namespace mixer_control {
 // * the mixer client object to call Check/Report with cache.
 class ClientContext {
  public:
-  ClientContext(const Controller::FactoryData& data);
+  ClientContext(const Controller::Options& data);
 
   // Use mixer client object to make a Check call.
   ::istio::mixer_client::CancelFunc SendCheck(

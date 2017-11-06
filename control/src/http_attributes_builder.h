@@ -36,13 +36,13 @@ class HttpAttributesBuilder {
       HttpCheckData* check_data);
 
   // Extract attributes for Check call.
-  void ExtractCheckAttributes(const HttpCheckData& check_data);
+  void ExtractCheckAttributes(HttpCheckData* check_data);
   // Extract attributes for Report call.
-  void ExtractReportAttributes(const HttpReportData& report_data);
+  void ExtractReportAttributes(HttpReportData* report_data);
 
  private:
   // Extract HTTP header attributes
-  void ExtractRequestHeaderAttributes(const HttpCheckData& check_data);
+  void ExtractRequestHeaderAttributes(HttpCheckData* check_data);
   // The request context object.
   RequestContext* request_;
 };

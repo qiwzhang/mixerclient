@@ -27,9 +27,9 @@ namespace istio {
 namespace mixer_control {
 
 void HttpAttributesBuilder::ExtractRequestHeaderAttributes(
-    const HttpCheckData& check_data) {
+    HttpCheckData* check_data) {
   AttributesBuilder builder(&request_->attributes);
-  std::map<std::string, std::string> headers = check_data.GetRequestHeaders();
+  std::map<std::string, std::string> headers = check_data->GetRequestHeaders();
   builder.AddStringMap(AttributeName::kRequestHeaders, headers);
 
   struct TopLevelAttr {
@@ -52,7 +52,7 @@ void HttpAttributesBuilder::ExtractRequestHeaderAttributes(
 
   for (const auto& it : attrs) {
     std::string data;
-    if (check_data.FindRequestHeader(it.header_type, &data)) {
+    if (check_data->FindRequestHeader(it.header_type, &data)) {
       builder.AddString(it.name, data);
     } else if (it.set_default) {
       builder.AddString(it.name, it.default_value);
@@ -82,21 +82,20 @@ void HttpAttributesBuilder::ExtractForwardedAttributes(
   }
 }
 
-void HttpAttributesBuilder::ExtractCheckAttributes(
-    const HttpCheckData& check_data) {
+void HttpAttributesBuilder::ExtractCheckAttributes(HttpCheckData* check_data) {
   ExtractRequestHeaderAttributes(check_data);
 
   AttributesBuilder builder(&request_->attributes);
 
   std::string source_ip;
   int source_port;
-  if (check_data.GetSourceIpPort(&source_ip, &source_port)) {
+  if (check_data->GetSourceIpPort(&source_ip, &source_port)) {
     builder.AddBytes(AttributeName::kSourceIp, source_ip);
     builder.AddInt64(AttributeName::kSourcePort, source_port);
   }
 
   std::string source_user;
-  if (check_data.GetSourceUser(&source_user)) {
+  if (check_data->GetSourceUser(&source_user)) {
     builder.AddString(AttributeName::kSourceUser, source_user);
   }
   builder.AddTimestamp(AttributeName::kRequestTime,
@@ -112,16 +111,17 @@ void HttpAttributesBuilder::ForwardAttributes(
 }
 
 void HttpAttributesBuilder::ExtractReportAttributes(
-    const HttpReportData& report_data) {
+    HttpReportData* report_data) {
   AttributesBuilder builder(&request_->attributes);
-  std::map<std::string, std::string> headers = report_data.GetResponseHeaders();
+  std::map<std::string, std::string> headers =
+      report_data->GetResponseHeaders();
   builder.AddStringMap(AttributeName::kResponseHeaders, headers);
 
   builder.AddTimestamp(AttributeName::kResponseTime,
                        std::chrono::system_clock::now());
 
   HttpReportData::ReportInfo info;
-  report_data.GetReportInfo(&info);
+  report_data->GetReportInfo(&info);
   builder.AddInt64(AttributeName::kRequestSize, info.received_bytes);
   builder.AddInt64(AttributeName::kResponseSize, info.send_bytes);
   builder.AddDuration(AttributeName::kResponseDuration, info.duration);

@@ -24,17 +24,17 @@ namespace istio {
 namespace mixer_control {
 
 TcpRequestHandlerImpl::TcpRequestHandlerImpl(
-    std::shared_ptr<ServiceContext> service_context,
-    std::unique_ptr<TcpCheckData> check_data)
-    : service_context_(service_context), check_data_(std::move(check_data)) {}
+    std::shared_ptr<ServiceContext> service_context)
+    : service_context_(service_context) {}
 
-CancelFunc TcpRequestHandlerImpl::Check(DoneFunc on_done) {
+CancelFunc TcpRequestHandlerImpl::Check(DoneFunc on_done,
+                                        TcpCheckData* check_data) {
   if (service_context_->enable_mixer_check() ||
       service_context_->enable_mixer_report()) {
     service_context_->AddStaticAttributes(&request_context_);
 
     TcpAttributesBuilder builder(&request_context_);
-    builder.ExtractCheckAttributes(*check_data_);
+    builder.ExtractCheckAttributes(check_data);
   }
 
   if (!service_context_->enable_mixer_check()) {
@@ -47,12 +47,12 @@ CancelFunc TcpRequestHandlerImpl::Check(DoneFunc on_done) {
 }
 
 // Make remote report call.
-void TcpRequestHandlerImpl::Report(std::unique_ptr<TcpReportData> report_data) {
+void TcpRequestHandlerImpl::Report(TcpReportData* report_data) {
   if (!service_context_->enable_mixer_report()) {
     return;
   }
   TcpAttributesBuilder builder(&request_context_);
-  builder.ExtractReportAttributes(*report_data);
+  builder.ExtractReportAttributes(report_data);
 
   service_context_->client_context()->SendReport(request_context_);
 }

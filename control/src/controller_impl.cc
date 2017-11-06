@@ -22,34 +22,39 @@ using ::istio::mixer::v1::config::client::MixerControlConfig;
 namespace istio {
 namespace mixer_control {
 
-ControllerImpl::ControllerImpl(const Controller::FactoryData& data) {
+ControllerImpl::ControllerImpl(const Options& data) {
   client_context_.reset(new ClientContext(data));
 }
 
 std::unique_ptr<HttpRequestHandler> ControllerImpl::CreateHttpRequestHandler(
-    std::unique_ptr<HttpCheckData> check_data,
-    std::unique_ptr<MixerControlConfig> per_route_config) {
-  return std::unique_ptr<HttpRequestHandler>(new HttpRequestHandlerImpl(
-      GetHttpServiceContext(*check_data, std::move(per_route_config)),
-      std::move(check_data)));
+    const PerRouteConfig& per_route_config) {
+  return std::unique_ptr<HttpRequestHandler>(
+      new HttpRequestHandlerImpl(GetHttpServiceContext(per_route_config)));
 }
 
-std::unique_ptr<TcpRequestHandler> ControllerImpl::CreateTcpRequestHandler(
-    std::unique_ptr<TcpCheckData> check_data) {
-  return std::unique_ptr<TcpRequestHandler>(new TcpRequestHandlerImpl(
-      GetTcpServiceContext(*check_data), std::move(check_data)));
+std::unique_ptr<TcpRequestHandler> ControllerImpl::CreateTcpRequestHandler() {
+  return std::unique_ptr<TcpRequestHandler>(
+      new TcpRequestHandlerImpl(GetTcpServiceContext()));
 }
 
 std::shared_ptr<ServiceContext> ControllerImpl::GetHttpServiceContext(
-    const HttpCheckData&,
-    std::unique_ptr<MixerControlConfig> per_route_config) {
-  // TODO: use check data to find config from control_configs
-  // TODO: cache the service config per destination.service.
-  return std::make_shared<ServiceContext>(client_context_, *per_route_config);
+    const PerRouteConfig& config) {
+  // If use legacy config
+  if (config.legacy_config) {
+    return std::make_shared<ServiceContext>(client_context_,
+                                            *config.legacy_config);
+  }
+  auto config_map = client_context_->config().control_configs();
+  auto it = config_map.find(config.destination_service);
+  if (it == config_map.end()) {
+    it = config_map.find(
+        client_context_->config().default_destination_service());
+  }
+  // TODO: cache this service context.
+  return std::make_shared<ServiceContext>(client_context_, it->second);
 }
 
-std::shared_ptr<ServiceContext> ControllerImpl::GetTcpServiceContext(
-    const TcpCheckData&) {
+std::shared_ptr<ServiceContext> ControllerImpl::GetTcpServiceContext() {
   if (!tcp_service_context_) {
     MixerControlConfig config;
     // Report is always on
@@ -62,9 +67,8 @@ std::shared_ptr<ServiceContext> ControllerImpl::GetTcpServiceContext(
   return tcp_service_context_;
 }
 
-std::unique_ptr<Controller> Controller::Create(
-    const FactoryData& factory_data) {
-  return std::unique_ptr<Controller>(new ControllerImpl(factory_data));
+std::unique_ptr<Controller> Controller::Create(const Options& data) {
+  return std::unique_ptr<Controller>(new ControllerImpl(data));
 }
 
 }  // namespace mixer_control

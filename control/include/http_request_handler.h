@@ -36,13 +36,13 @@ class HttpRequestHandler {
   // * make a Check call.
   virtual ::istio::mixer_client::CancelFunc Check(
       ::istio::mixer_client::TransportCheckFunc transport,
-      ::istio::mixer_client::DoneFunc on_done) = 0;
+      ::istio::mixer_client::DoneFunc on_done, HttpCheckData* check_data) = 0;
 
   // Make a Report call. It will:
   // * check service config to see if Report is required
   // * extract more report attributes
   // * make a Report call.
-  virtual void Report(std::unique_ptr<HttpReportData> report_data) = 0;
+  virtual void Report(HttpReportData* report_data) = 0;
 };
 
 }  // namespace mixer_control

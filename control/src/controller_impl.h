@@ -28,28 +28,22 @@ namespace mixer_control {
 // The class to implement Controller interface.
 class ControllerImpl : public Controller {
  public:
-  ControllerImpl(const Controller::FactoryData& data);
+  ControllerImpl(const Controller::Options& data);
 
   // Creates a HTTP request handler
   std::unique_ptr<HttpRequestHandler> CreateHttpRequestHandler(
-      std::unique_ptr<HttpCheckData> check_data,
-      std::unique_ptr<::istio::mixer::v1::config::client::MixerControlConfig>
-          per_route_config) override;
+      const PerRouteConfig& per_route_config) override;
 
   // Creates a TCP request handler
-  std::unique_ptr<TcpRequestHandler> CreateTcpRequestHandler(
-      std::unique_ptr<TcpCheckData> check_data) override;
+  std::unique_ptr<TcpRequestHandler> CreateTcpRequestHandler() override;
 
  private:
   // Create service config context for HTTP.
   std::shared_ptr<ServiceContext> GetHttpServiceContext(
-      const HttpCheckData& check_data,
-      std::unique_ptr<::istio::mixer::v1::config::client::MixerControlConfig>
-          per_route_config);
+      const PerRouteConfig& per_route_config);
 
   // Create service config context for TCP
-  std::shared_ptr<ServiceContext> GetTcpServiceContext(
-      const TcpCheckData& check_data);
+  std::shared_ptr<ServiceContext> GetTcpServiceContext();
 
   // The client context object to hold client config and client cache.
   std::shared_ptr<ClientContext> client_context_;

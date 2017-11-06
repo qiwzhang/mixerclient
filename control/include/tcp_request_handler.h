@@ -32,11 +32,11 @@ class TcpRequestHandler {
   // * extract downstream tcp connection attributes
   // * check config, make a Check call if necessary.
   virtual ::istio::mixer_client::CancelFunc Check(
-      ::istio::mixer_client::DoneFunc on_done) = 0;
+      ::istio::mixer_client::DoneFunc on_done, TcpCheckData* check_data) = 0;
 
   // Make report call.
   // This can be called multiple times for long connection.
-  virtual void Report(std::unique_ptr<TcpReportData> report_data) = 0;
+  virtual void Report(TcpReportData* report_data) = 0;
 };
 
 }  // namespace mixer_control

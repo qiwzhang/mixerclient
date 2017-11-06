@@ -62,7 +62,7 @@ ReportOptions GetReportOptions(const MixerFilterConfig& config) {
 
 }  // namespace
 
-ClientContext::ClientContext(const Controller::FactoryData& data)
+ClientContext::ClientContext(const Controller::Options& data)
     : config_(data.mixer_config) {
   MixerClientOptions options(GetCheckOptions(config_),
                              GetReportOptions(config_),

@@ -194,7 +194,7 @@ TEST(HttpAttributesBuilderTest, TestCheckAttributes) {
 
   RequestContext request;
   HttpAttributesBuilder builder(&request);
-  builder.ExtractCheckAttributes(mock_data);
+  builder.ExtractCheckAttributes(&mock_data);
 
   ClearContextTime(AttributeName::kRequestTime, &request);
 
@@ -228,7 +228,7 @@ TEST(HttpAttributesBuilderTest, TestReportAttributes) {
 
   RequestContext request;
   HttpAttributesBuilder builder(&request);
-  builder.ExtractReportAttributes(mock_data);
+  builder.ExtractReportAttributes(&mock_data);
 
   ClearContextTime(AttributeName::kResponseTime, &request);
 

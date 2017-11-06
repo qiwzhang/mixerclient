@@ -23,19 +23,18 @@ using ::istio::mixer_client::AttributesBuilder;
 namespace istio {
 namespace mixer_control {
 
-void TcpAttributesBuilder::ExtractCheckAttributes(
-    const TcpCheckData& check_data) {
+void TcpAttributesBuilder::ExtractCheckAttributes(TcpCheckData* check_data) {
   AttributesBuilder builder(&request_->attributes);
 
   std::string source_ip;
   int source_port;
-  if (check_data.GetSourceIpPort(&source_ip, &source_port)) {
+  if (check_data->GetSourceIpPort(&source_ip, &source_port)) {
     builder.AddBytes(AttributeName::kSourceIp, source_ip);
     builder.AddInt64(AttributeName::kSourcePort, source_port);
   }
 
   std::string source_user;
-  if (check_data.GetSourceUser(&source_user)) {
+  if (check_data->GetSourceUser(&source_user)) {
     builder.AddString(AttributeName::kSourceUser, source_user);
   }
   builder.AddTimestamp(AttributeName::kContextTime,
@@ -43,12 +42,11 @@ void TcpAttributesBuilder::ExtractCheckAttributes(
   builder.AddString(AttributeName::kContextProtocol, "tcp");
 }
 
-void TcpAttributesBuilder::ExtractReportAttributes(
-    const TcpReportData& report_data) {
+void TcpAttributesBuilder::ExtractReportAttributes(TcpReportData* report_data) {
   AttributesBuilder builder(&request_->attributes);
 
   TcpReportData::ReportInfo info;
-  report_data.GetReportInfo(&info);
+  report_data->GetReportInfo(&info);
   builder.AddInt64(AttributeName::kConnectionReceviedBytes,
                    info.received_bytes);
   builder.AddInt64(AttributeName::kConnectionReceviedTotalBytes,
@@ -61,7 +59,7 @@ void TcpAttributesBuilder::ExtractReportAttributes(
 
   std::string dest_ip;
   int dest_port;
-  if (report_data.GetDestinationIpPort(&dest_ip, &dest_port)) {
+  if (report_data->GetDestinationIpPort(&dest_ip, &dest_port)) {
     builder.AddBytes(AttributeName::kDestinationIp, dest_ip);
     builder.AddInt64(AttributeName::kDestinationPort, dest_port);
   }

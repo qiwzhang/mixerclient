@@ -151,7 +151,7 @@ TEST(TcpAttributesBuilderTest, TestCheckAttributes) {
 
   RequestContext request;
   TcpAttributesBuilder builder(&request);
-  builder.ExtractCheckAttributes(mock_data);
+  builder.ExtractCheckAttributes(&mock_data);
 
   ClearContextTime(&request);
 
@@ -183,7 +183,7 @@ TEST(TcpAttributesBuilderTest, TestReportAttributes) {
 
   RequestContext request;
   TcpAttributesBuilder builder(&request);
-  builder.ExtractReportAttributes(mock_data);
+  builder.ExtractReportAttributes(&mock_data);
 
   ClearContextTime(&request);
 
