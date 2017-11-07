@@ -31,8 +31,8 @@ class TcpRequestHandlerImpl : public TcpRequestHandler {
 
   // Make a Check call.
   ::istio::mixer_client::CancelFunc Check(
-      ::istio::mixer_client::DoneFunc on_done,
-      TcpCheckData* check_data) override;
+      TcpCheckData* check_data,
+      ::istio::mixer_client::DoneFunc on_done) override;
 
   // Make a Report call.
   void Report(TcpReportData* report_data) override;

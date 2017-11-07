@@ -31,9 +31,9 @@ class HttpRequestHandlerImpl : public HttpRequestHandler {
 
   // Makes a Check call.
   ::istio::mixer_client::CancelFunc Check(
+      HttpCheckData* check_data,
       ::istio::mixer_client::TransportCheckFunc transport,
-      ::istio::mixer_client::DoneFunc on_done,
-      HttpCheckData* check_data) override;
+      ::istio::mixer_client::DoneFunc on_done) override;
 
   // Make a Report call.
   void Report(HttpReportData* report_data) override;

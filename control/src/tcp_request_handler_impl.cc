@@ -27,8 +27,8 @@ TcpRequestHandlerImpl::TcpRequestHandlerImpl(
     std::shared_ptr<ServiceContext> service_context)
     : service_context_(service_context) {}
 
-CancelFunc TcpRequestHandlerImpl::Check(DoneFunc on_done,
-                                        TcpCheckData* check_data) {
+CancelFunc TcpRequestHandlerImpl::Check(TcpCheckData* check_data,
+                                        DoneFunc on_done) {
   if (service_context_->enable_mixer_check() ||
       service_context_->enable_mixer_report()) {
     service_context_->AddStaticAttributes(&request_context_);
