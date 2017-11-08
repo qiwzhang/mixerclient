@@ -23,8 +23,8 @@
 #include <string>
 #include <unordered_map>
 
-#include "api_spec/http_template.h"
-#include "api_spec/path_matcher_node.h"
+#include "http_template.h"
+#include "path_matcher_node.h"
 
 namespace istio {
 namespace api_spec {

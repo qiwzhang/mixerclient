@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-#include "api_spec/http_template.h"
+#include "http_template.h"
 
 namespace istio {
 namespace api_spec {

@@ -17,13 +17,13 @@ licenses(["notice"])
 cc_library(
     name = "api_spec_lib",
     srcs = [
-        "http_template.cc",
-        "http_template.h",
-        "path_matcher_node.cc",
-        "path_matcher_node.h",
+        "src/http_template.cc",
+        "src/http_template.h",
+        "src/path_matcher.h",
+        "src/path_matcher_node.cc",
+        "src/path_matcher_node.h",
     ],
     hdrs = [
-        "path_matcher.h",
     ],
     visibility = ["//visibility:public"],
 )
@@ -31,7 +31,7 @@ cc_library(
 cc_test(
     name = "path_matcher_test",
     size = "small",
-    srcs = ["path_matcher_test.cc"],
+    srcs = ["src/path_matcher_test.cc"],
     linkopts = [
         "-lm",
         "-lpthread",
@@ -46,7 +46,7 @@ cc_test(
 cc_test(
     name = "http_template_test",
     size = "small",
-    srcs = ["http_template_test.cc"],
+    srcs = ["src/http_template_test.cc"],
     linkopts = [
         "-lm",
         "-lpthread",
