@@ -32,6 +32,25 @@ cc_test(
     name = "path_matcher_test",
     size = "small",
     srcs = ["path_matcher_test.cc"],
+    linkopts = [
+        "-lm",
+        "-lpthread",
+    ],
+    linkstatic = 1,
+    deps = [
+        ":api_spec_lib",
+        "//external:googletest_main",
+    ],
+)
+
+cc_test(
+    name = "http_template_test",
+    size = "small",
+    srcs = ["http_template_test.cc"],
+    linkopts = [
+        "-lm",
+        "-lpthread",
+    ],
     linkstatic = 1,
     deps = [
         ":api_spec_lib",
