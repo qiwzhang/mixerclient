@@ -70,6 +70,7 @@ class Controller {
   // The initial data required by the Controller. It needs:
   // * client_config: the mixer client config.
   // * some functions provided by the environment (Envoy)
+  // * optional service config cache size.
   struct Options {
     Options(const ::istio::mixer::v1::config::client::HttpClientConfig& config,
             const std::vector<::istio::quota::Requirement>& legacy_quotas)

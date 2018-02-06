@@ -63,7 +63,7 @@ class ClientContext : public ClientContextBase {
   // Legacy mixer config quota requirements.
   const std::vector<::istio::quota::Requirement>& legacy_quotas_;
 
-  // The service config cacie size
+  // The service config cache size
   int service_config_cache_size_;
 };
 
