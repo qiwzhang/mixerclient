@@ -81,9 +81,6 @@ forward_attributes {
 class RequestHandlerImplTest : public ::testing::Test {
  public:
   void SetUp() {
-    // add a legacy quota
-    legacy_quotas_.push_back({"legacy-quota", 10});
-
     SetUpMockController(kDefaultClientConfig);
   }
 
@@ -93,8 +90,7 @@ class RequestHandlerImplTest : public ::testing::Test {
     mock_client_ = new ::testing::NiceMock<MockMixerClient>;
     // set LRU cache size is 3
     client_context_ = std::make_shared<ClientContext>(
-        std::unique_ptr<MixerClient>(mock_client_), client_config_,
-        legacy_quotas_, 3);
+        std::unique_ptr<MixerClient>(mock_client_), client_config_, 3);
     controller_ =
         std::unique_ptr<Controller>(new ControllerImpl(client_context_));
   }
@@ -105,7 +101,6 @@ class RequestHandlerImplTest : public ::testing::Test {
 
   std::shared_ptr<ClientContext> client_context_;
   HttpClientConfig client_config_;
-  std::vector<Requirement> legacy_quotas_;
   ::testing::NiceMock<MockMixerClient>* mock_client_;
   std::unique_ptr<Controller> controller_;
 };
