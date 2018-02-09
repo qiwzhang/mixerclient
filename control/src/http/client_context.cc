@@ -23,7 +23,8 @@ namespace http {
 
 ClientContext::ClientContext(const Controller::Options& data)
     : ClientContextBase(data.config.transport(), data.env),
-      config_(data.config), service_config_cache_size_(data.service_config_cache_size) {}
+      config_(data.config),
+      service_config_cache_size_(data.service_config_cache_size) {}
 
 ClientContext::ClientContext(
     std::unique_ptr<::istio::mixer_client::MixerClient> mixer_client,

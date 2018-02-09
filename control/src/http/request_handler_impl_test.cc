@@ -80,9 +80,7 @@ forward_attributes {
 
 class RequestHandlerImplTest : public ::testing::Test {
  public:
-  void SetUp() {
-    SetUpMockController(kDefaultClientConfig);
-  }
+  void SetUp() { SetUpMockController(kDefaultClientConfig); }
 
   void SetUpMockController(const std::string& config_text) {
     ASSERT_TRUE(TextFormat::ParseFromString(config_text, &client_config_));
@@ -97,6 +95,12 @@ class RequestHandlerImplTest : public ::testing::Test {
 
   void SetServiceConfig(const std::string& name, const ServiceConfig& config) {
     (*client_config_.mutable_service_configs())[name] = config;
+  }
+
+  void ApplyPerRouteConfig(const ServiceConfig& service_config,
+                           Controller::PerRouteConfig* per_route) {
+    per_route->service_config_id = "1111";
+    controller_->AddServiceConfig(per_route->service_config_id, service_config);
   }
 
   std::shared_ptr<ClientContext> client_context_;
@@ -133,13 +137,13 @@ TEST_F(RequestHandlerImplTest, TestHandlerDisabledCheckReport) {
   // Check should NOT be called.
   EXPECT_CALL(*mock_client_, Check(_, _, _, _)).Times(0);
 
-  ServiceConfig legacy;
-  legacy.set_disable_check_calls(true);
-  legacy.set_disable_report_calls(true);
-  Controller::PerRouteConfig config;
-  config.legacy_config = &legacy;
+  ServiceConfig config;
+  config.set_disable_check_calls(true);
+  config.set_disable_report_calls(true);
+  Controller::PerRouteConfig per_route;
+  ApplyPerRouteConfig(config, &per_route);
 
-  auto handler = controller_->CreateRequestHandler(config);
+  auto handler = controller_->CreateRequestHandler(per_route);
   handler->Check(&mock_data, &mock_header, nullptr,
                  [](const Status& status) { EXPECT_TRUE(status.ok()); });
 }
@@ -154,17 +158,17 @@ TEST_F(RequestHandlerImplTest, TestHandlerDisabledCheck) {
   // Check should NOT be called.
   EXPECT_CALL(*mock_client_, Check(_, _, _, _)).Times(0);
 
-  ServiceConfig legacy;
-  legacy.set_disable_check_calls(true);
-  Controller::PerRouteConfig config;
-  config.legacy_config = &legacy;
+  ServiceConfig config;
+  config.set_disable_check_calls(true);
+  Controller::PerRouteConfig per_route;
+  ApplyPerRouteConfig(config, &per_route);
 
-  auto handler = controller_->CreateRequestHandler(config);
+  auto handler = controller_->CreateRequestHandler(per_route);
   handler->Check(&mock_data, &mock_header, nullptr,
                  [](const Status& status) { EXPECT_TRUE(status.ok()); });
 }
 
-TEST_F(RequestHandlerImplTest, TestLegacyRoute) {
+TEST_F(RequestHandlerImplTest, TestPerRouteAttributes) {
   ::testing::NiceMock<MockCheckData> mock_data;
   ::testing::NiceMock<MockHeaderUpdate> mock_header;
   EXPECT_CALL(mock_data, GetSourceIpPort(_, _)).Times(1);
@@ -178,21 +182,17 @@ TEST_F(RequestHandlerImplTest, TestLegacyRoute) {
                           DoneFunc on_done) -> CancelFunc {
         auto map = attributes.attributes();
         EXPECT_EQ(map["global-key"].string_value(), "global-value");
-        EXPECT_EQ(map["legacy-key"].string_value(), "legacy-value");
-        EXPECT_EQ(quotas.size(), 1);
-        EXPECT_EQ(quotas[0].quota, "legacy-quota");
-        EXPECT_EQ(quotas[0].charge, 10);
+        EXPECT_EQ(map["per-route-key"].string_value(), "per-route-value");
         return nullptr;
       }));
 
-  ServiceConfig legacy;
-  Controller::PerRouteConfig config;
-  config.legacy_config = &legacy;
+  ServiceConfig config;
+  auto map2 = config.mutable_mixer_attributes()->mutable_attributes();
+  (*map2)["per-route-key"].set_string_value("per-route-value");
+  Controller::PerRouteConfig per_route;
+  ApplyPerRouteConfig(config, &per_route);
 
-  auto map2 = legacy.mutable_mixer_attributes()->mutable_attributes();
-  (*map2)["legacy-key"].set_string_value("legacy-value");
-
-  auto handler = controller_->CreateRequestHandler(config);
+  auto handler = controller_->CreateRequestHandler(per_route);
   handler->Check(&mock_data, &mock_header, nullptr, nullptr);
 }
 
@@ -250,15 +250,9 @@ TEST_F(RequestHandlerImplTest, TestRouteAttributes) {
   handler->Check(&mock_data, &mock_header, nullptr, nullptr);
 }
 
-TEST_F(RequestHandlerImplTest, TestDefaultRouteQuota) {
+TEST_F(RequestHandlerImplTest, TestPerRouteQuota) {
   ::testing::NiceMock<MockCheckData> mock_data;
   ::testing::NiceMock<MockHeaderUpdate> mock_header;
-
-  ServiceConfig route_config;
-  auto quota = route_config.add_quota_spec()->add_rules()->add_quotas();
-  quota->set_quota("route0-quota");
-  quota->set_charge(10);
-  SetServiceConfig(":default", route_config);
 
   // Check should be called.
   EXPECT_CALL(*mock_client_, Check(_, _, _, _))
@@ -268,21 +262,24 @@ TEST_F(RequestHandlerImplTest, TestDefaultRouteQuota) {
                           DoneFunc on_done) -> CancelFunc {
         auto map = attributes.attributes();
         EXPECT_EQ(map["global-key"].string_value(), "global-value");
-        EXPECT_EQ(quotas.size(), 2);
-        EXPECT_EQ(quotas[0].quota, "legacy-quota");
+        EXPECT_EQ(quotas.size(), 1);
+        EXPECT_EQ(quotas[0].quota, "route0-quota");
         EXPECT_EQ(quotas[0].charge, 10);
-        EXPECT_EQ(quotas[1].quota, "route0-quota");
-        EXPECT_EQ(quotas[1].charge, 10);
         return nullptr;
       }));
 
-  // destionation.server is empty, will use default one
-  Controller::PerRouteConfig config;
-  auto handler = controller_->CreateRequestHandler(config);
+  ServiceConfig config;
+  auto quota = config.add_quota_spec()->add_rules()->add_quotas();
+  quota->set_quota("route0-quota");
+  quota->set_charge(10);
+  Controller::PerRouteConfig per_route;
+  ApplyPerRouteConfig(config, &per_route);
+
+  auto handler = controller_->CreateRequestHandler(per_route);
   handler->Check(&mock_data, &mock_header, nullptr, nullptr);
 }
 
-TEST_F(RequestHandlerImplTest, TestDefaultRouteApiSpec) {
+TEST_F(RequestHandlerImplTest, TestPerRouteApiSpec) {
   ::testing::NiceMock<MockCheckData> mock_data;
   ::testing::NiceMock<MockHeaderUpdate> mock_header;
   EXPECT_CALL(mock_data, FindHeaderByType(_, _))
@@ -299,17 +296,6 @@ TEST_F(RequestHandlerImplTest, TestDefaultRouteApiSpec) {
             return false;
           }));
 
-  ServiceConfig route_config;
-  auto api_spec = route_config.add_http_api_spec();
-  auto map1 = api_spec->mutable_attributes()->mutable_attributes();
-  (*map1)["api.name"].set_string_value("test-name");
-  auto pattern = api_spec->add_patterns();
-  auto map2 = pattern->mutable_attributes()->mutable_attributes();
-  (*map2)["api.operation"].set_string_value("test-method");
-  pattern->set_http_method("GET");
-  pattern->set_uri_template("/books/*");
-  SetServiceConfig(":default", route_config);
-
   // Check should be called.
   EXPECT_CALL(*mock_client_, Check(_, _, _, _))
       .WillOnce(Invoke([](const Attributes& attributes,
@@ -323,9 +309,20 @@ TEST_F(RequestHandlerImplTest, TestDefaultRouteApiSpec) {
         return nullptr;
       }));
 
-  // destionation.server is empty, will use default one
-  Controller::PerRouteConfig config;
-  auto handler = controller_->CreateRequestHandler(config);
+  ServiceConfig config;
+  auto api_spec = config.add_http_api_spec();
+  auto map1 = api_spec->mutable_attributes()->mutable_attributes();
+  (*map1)["api.name"].set_string_value("test-name");
+  auto pattern = api_spec->add_patterns();
+  auto map2 = pattern->mutable_attributes()->mutable_attributes();
+  (*map2)["api.operation"].set_string_value("test-method");
+  pattern->set_http_method("GET");
+  pattern->set_uri_template("/books/*");
+
+  Controller::PerRouteConfig per_route;
+  ApplyPerRouteConfig(config, &per_route);
+
+  auto handler = controller_->CreateRequestHandler(per_route);
   handler->Check(&mock_data, &mock_header, nullptr, nullptr);
 }
 
@@ -338,11 +335,11 @@ TEST_F(RequestHandlerImplTest, TestHandlerCheck) {
   // Check should be called.
   EXPECT_CALL(*mock_client_, Check(_, _, _, _)).Times(1);
 
-  ServiceConfig legacy;
-  Controller::PerRouteConfig config;
-  config.legacy_config = &legacy;
+  ServiceConfig config;
+  Controller::PerRouteConfig per_route;
+  ApplyPerRouteConfig(config, &per_route);
 
-  auto handler = controller_->CreateRequestHandler(config);
+  auto handler = controller_->CreateRequestHandler(per_route);
   handler->Check(&mock_data, &mock_header, nullptr, nullptr);
 }
 
@@ -385,11 +382,11 @@ TEST_F(RequestHandlerImplTest, TestHandlerReport) {
   // Report should be called.
   EXPECT_CALL(*mock_client_, Report(_)).Times(1);
 
-  ServiceConfig legacy;
-  Controller::PerRouteConfig config;
-  config.legacy_config = &legacy;
+  ServiceConfig config;
+  Controller::PerRouteConfig per_route;
+  ApplyPerRouteConfig(config, &per_route);
 
-  auto handler = controller_->CreateRequestHandler(config);
+  auto handler = controller_->CreateRequestHandler(per_route);
   handler->Report(&mock_data);
 }
 
@@ -401,12 +398,12 @@ TEST_F(RequestHandlerImplTest, TestHandlerDisabledReport) {
   // Report should NOT be called.
   EXPECT_CALL(*mock_client_, Report(_)).Times(0);
 
-  ServiceConfig legacy;
-  legacy.set_disable_report_calls(true);
-  Controller::PerRouteConfig config;
-  config.legacy_config = &legacy;
+  ServiceConfig config;
+  config.set_disable_report_calls(true);
+  Controller::PerRouteConfig per_route;
+  ApplyPerRouteConfig(config, &per_route);
 
-  auto handler = controller_->CreateRequestHandler(config);
+  auto handler = controller_->CreateRequestHandler(per_route);
   handler->Report(&mock_data);
 }
 
