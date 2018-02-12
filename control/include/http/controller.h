@@ -69,8 +69,8 @@ class Controller {
   // * some functions provided by the environment (Envoy)
   // * optional service config cache size.
   struct Options {
-  Options(const ::istio::mixer::v1::config::client::HttpClientConfig& config)
-  : config(config) {}
+    Options(const ::istio::mixer::v1::config::client::HttpClientConfig& config)
+        : config(config) {}
 
     // Mixer filter config
     const ::istio::mixer::v1::config::client::HttpClientConfig& config;
